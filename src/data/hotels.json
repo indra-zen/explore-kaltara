@@ -1,0 +1,212 @@
+[
+  {
+    "id": "swiss-belhotel-tarakan",
+    "name": "Swiss-Belhotel Tarakan",
+    "location": "Tarakan",
+    "address": "Jl. Mulawarman No.15, Tarakan",
+    "rating": 4.4,
+    "reviewCount": 2264,
+    "category": "hotel-bintang-4",
+    "description": "Kamar dan suite mewah, restoran, kolam renang outdoor, ruang pertemuan. Hotel bintang 4 ini merupakan salah satu pilihan terkemuka untuk bisnis maupun liburan.",
+    "priceRange": "IDR 800,000 - IDR 1,500,000",
+    "image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["Restoran", "Kolam Renang Outdoor", "Ruang Pertemuan", "WiFi", "AC", "Room Service", "Laundry", "Gym"],
+    "coordinates": {
+      "lat": 3.32,
+      "lng": 117.58
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": true,
+      "gym": true,
+      "restaurant": true,
+      "spa": false,
+      "parking": true,
+      "airportShuttle": false,
+      "businessCenter": true,
+      "roomService": true
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
+  },
+  {
+    "id": "luminor-hotel-tanjung-selor",
+    "name": "Luminor Hotel Tanjung Selor",
+    "location": "Bulungan",
+    "address": "Jl. Sabanar Lama, Tanjung Selor, Bulungan",
+    "rating": 4.6,
+    "reviewCount": 1411,
+    "category": "hotel-bintang-3",
+    "description": "Hotel modern dengan kamar dan suite kasual, restoran 24 jam, dan fasilitas kebugaran. Merupakan salah satu hotel bintang 3 terbaik di Tanjung Selor.",
+    "priceRange": "IDR 600,000 - IDR 1,000,000",
+    "image": "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["Restoran 24 Jam", "Gym", "WiFi", "AC", "Room Service", "Laundry", "Meeting Room"],
+    "coordinates": {
+      "lat": 2.84,
+      "lng": 117.13
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": false,
+      "gym": true,
+      "restaurant": true,
+      "spa": false,
+      "parking": true,
+      "airportShuttle": false,
+      "businessCenter": true,
+      "roomService": true
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
+  },
+  {
+    "id": "hotel-dcalia-malinau",
+    "name": "Hotel D'Calia Malinau",
+    "location": "Malinau",
+    "address": "Malinau Kota, Malinau, Kalimantan Utara",
+    "rating": 4.8,
+    "reviewCount": 83,
+    "category": "hotel-modern",
+    "description": "Hotel modern dengan fasilitas yang nyaman, cocok untuk wisatawan bisnis maupun liburan di Malinau.",
+    "priceRange": "IDR 500,000 - IDR 800,000",
+    "image": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["WiFi", "AC", "Kamar Mandi Dalam", "TV", "Room Service"],
+    "coordinates": {
+      "lat": 3.6,
+      "lng": 116.5
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": false,
+      "gym": false,
+      "restaurant": true,
+      "spa": false,
+      "parking": true,
+      "airportShuttle": false,
+      "businessCenter": false,
+      "roomService": true
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
+  },
+  {
+    "id": "hotel-dcalia-tarakan",
+    "name": "Hotel D'Calia Tarakan",
+    "location": "Tarakan",
+    "address": "Jl. Yos Sudarso No.3, Tarakan",
+    "rating": 4.2,
+    "reviewCount": 960,
+    "category": "hotel-modern",
+    "description": "Hotel modern yang menawarkan kenyamanan menginap dengan lokasi strategis di kota Tarakan.",
+    "priceRange": "IDR 400,000 - IDR 700,000",
+    "image": "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["AC", "WiFi", "TV", "Kamar Mandi Dalam"],
+    "coordinates": {
+      "lat": 3.31,
+      "lng": 117.59
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": false,
+      "gym": false,
+      "restaurant": false,
+      "spa": false,
+      "parking": true,
+      "airportShuttle": false,
+      "businessCenter": false,
+      "roomService": false
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
+  },
+  {
+    "id": "hotel-lembasung-tarakan",
+    "name": "Hotel Lembasung",
+    "location": "Tarakan",
+    "address": "Jalan Pulau Irian No.1, Kampung Satu Skip, Tarakan Tengah",
+    "rating": 4.4,
+    "reviewCount": 559,
+    "category": "hotel-budget",
+    "description": "Kamar simpel yang nyaman dengan Wi-Fi gratis, sarapan, kafe, dan layanan antar jemput bandara gratis.",
+    "priceRange": "IDR 300,000 - IDR 500,000",
+    "image": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["Wi-Fi", "Sarapan", "Kafe", "Layanan Antar Jemput Bandara Gratis", "AC"],
+    "coordinates": {
+      "lat": 3.325,
+      "lng": 117.575
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": false,
+      "gym": false,
+      "restaurant": true,
+      "spa": false,
+      "parking": true,
+      "airportShuttle": true,
+      "businessCenter": false,
+      "roomService": false
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
+  },
+  {
+    "id": "neo-fortuna-hotel-nunukan",
+    "name": "NEO FORTUNA HOTEL",
+    "location": "Nunukan",
+    "address": "Nunukan Utara, Nunukan, Kalimantan Utara",
+    "rating": 4.4,
+    "reviewCount": 209,
+    "category": "hotel-modern",
+    "description": "Hotel dengan fasilitas modern dan nyaman, sering menjadi pilihan utama di Nunukan.",
+    "priceRange": "IDR 600,000 - IDR 900,000",
+    "image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["Restoran", "WiFi", "AC", "Meeting Room", "Laundry"],
+    "coordinates": {
+      "lat": 4.13,
+      "lng": 116.98
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": false,
+      "gym": false,
+      "restaurant": true,
+      "spa": false,
+      "parking": true,
+      "airportShuttle": false,
+      "businessCenter": true,
+      "roomService": true
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
+  }
+]

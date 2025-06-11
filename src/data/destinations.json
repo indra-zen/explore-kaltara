@@ -1,0 +1,178 @@
+[
+  {
+    "id": "hutan-mangrove-bekantan-tarakan",
+    "name": "Hutan Mangrove dan Konservasi Bekantan",
+    "location": "Tarakan",
+    "category": "alam",
+    "description": "Kawasan hutan mangrove yang luas, menjadi habitat alami bagi bekantan (kera hidung panjang) dan berbagai jenis burung. Terdapat jembatan kayu yang memudahkan pengunjung untuk menyusuri hutan dan mengamati satwa liar. Merupakan paru-paru kota Tarakan.",
+    "rating": 4.5,
+    "image": "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1569163139394-de44cb2dd4e7?w=800&h=600&fit=crop"
+    ],
+    "coordinates": {
+      "lat": 3.3,
+      "lng": 117.6
+    },
+    "facilities": ["Jembatan Kayu", "Area Observasi", "Toilet", "Parkir"],
+    "bestTimeToVisit": "Pagi hari (06:00-09:00) untuk melihat aktivitas bekantan",
+    "ticketPrice": "Gratis",
+    "openingHours": "24 jam"
+  },
+  {
+    "id": "pulau-kumala-tarakan",
+    "name": "Pulau Kumala",
+    "location": "Tarakan",
+    "category": "alam",
+    "description": "Pulau buatan yang berlokasi di tengah Delta Kayan, dulunya merupakan kawasan reklamasi. Kini menjadi pusat rekreasi dengan taman, restoran, kolam renang, dan berbagai fasilitas hiburan. Cocok untuk liburan keluarga.",
+    "rating": 4.0,
+    "image": "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=600&fit=crop"
+    ],
+    "coordinates": {
+      "lat": 3.32,
+      "lng": 117.63
+    },
+    "facilities": ["Kolam Renang", "Restoran", "Taman", "Area Bermain Anak", "Parkir"],
+    "bestTimeToVisit": "Sore hari untuk menikmati sunset",
+    "ticketPrice": "IDR 15,000",
+    "openingHours": "08:00 - 22:00"
+  },
+  {
+    "id": "pantai-amal-tarakan",
+    "name": "Pantai Amal",
+    "location": "Tarakan",
+    "category": "alam",
+    "description": "Pantai populer di Tarakan yang ramai dikunjungi, terutama saat sore hari untuk menikmati matahari terbit atau terbenam. Banyak warung makan yang menjual hidangan laut segar. Ideal untuk bersantai dan kuliner.",
+    "rating": 4.0,
+    "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=600&fit=crop"
+    ],
+    "coordinates": {
+      "lat": 3.35,
+      "lng": 117.65
+    },
+    "facilities": ["Warung Makan", "Area Parkir", "Toilet", "Gazebo"],
+    "bestTimeToVisit": "Sore hari (16:00-18:00) untuk sunset",
+    "ticketPrice": "Gratis",
+    "openingHours": "24 jam"
+  },
+  {
+    "id": "taman-nasional-kayan-mentarang",
+    "name": "Taman Nasional Kayan Mentarang",
+    "location": "Malinau",
+    "category": "alam",
+    "description": "Salah satu taman nasional terbesar di Asia Tenggara, mencakup sebagian besar wilayah pegunungan. Kaya akan keanekaragaman hayati, flora dan fauna endemik, serta menjadi rumah bagi beberapa suku Dayak asli. Cocok untuk ekowisata petualangan dan penelitian.",
+    "rating": 4.7,
+    "image": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
+    ],
+    "coordinates": {
+      "lat": 3.6,
+      "lng": 116.5
+    },
+    "facilities": ["Camping Ground", "Trekking Trail", "Visitor Center", "Guide Service"],
+    "bestTimeToVisit": "Musim kemarau (April-Oktober)",
+    "ticketPrice": "IDR 30,000",
+    "openingHours": "06:00 - 18:00"
+  },
+  {
+    "id": "air-terjun-tujuh-tingkat",
+    "name": "Air Terjun Tujuh Tingkat",
+    "location": "Malinau",
+    "category": "alam",
+    "description": "Air terjun berundak dengan tujuh tingkatan yang memukau. Dikelilingi hutan tropis yang lebat, menawarkan pemandangan alam yang indah dan suasana sejuk. Perlu sedikit treking untuk mencapainya.",
+    "rating": 4.3,
+    "image": "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
+    ],
+    "coordinates": {
+      "lat": 3.4,
+      "lng": 116.3
+    },
+    "facilities": ["Trekking Trail", "Area Istirahat", "Toilet"],
+    "bestTimeToVisit": "Pagi hari untuk cahaya terbaik",
+    "ticketPrice": "IDR 10,000",
+    "openingHours": "06:00 - 17:00"
+  },
+  {
+    "id": "museum-rumah-bundar-tarakan",
+    "name": "Museum Rumah Bundar",
+    "location": "Tarakan",
+    "category": "budaya",
+    "description": "Bekas markas tentara Jepang pada masa Perang Dunia II. Kini berfungsi sebagai museum yang menyimpan berbagai koleksi benda bersejarah, foto, dan dokumen terkait perang di Tarakan. Destinasi penting bagi peminat sejarah.",
+    "rating": 4.0,
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1577720643271-6760ee11e83d?w=800&h=600&fit=crop"
+    ],
+    "coordinates": {
+      "lat": 3.33,
+      "lng": 117.64
+    },
+    "facilities": ["Museum", "Parking", "Toilet", "Gift Shop"],
+    "bestTimeToVisit": "Pagi atau sore hari",
+    "ticketPrice": "IDR 5,000",
+    "openingHours": "08:00 - 16:00"
+  },
+  {
+    "id": "desa-wisata-dayak-setulang",
+    "name": "Desa Wisata Budaya Dayak Setulang",
+    "location": "Malinau",
+    "category": "budaya",
+    "description": "Salah satu desa adat Dayak yang masih mempertahankan tradisi dan budaya leluhur. Pengunjung dapat berinteraksi langsung dengan masyarakat Dayak, melihat rumah adat, kerajinan tangan, dan memahami kehidupan tradisional.",
+    "rating": 4.5,
+    "image": "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1565715302109-2348a3a2c58d?w=800&h=600&fit=crop"
+    ],
+    "coordinates": {
+      "lat": 3.5,
+      "lng": 116.4
+    },
+    "facilities": ["Homestay", "Cultural Shows", "Handicraft Shop", "Local Guide"],
+    "bestTimeToVisit": "Selama festival budaya (Juli-Agustus)",
+    "ticketPrice": "IDR 25,000",
+    "openingHours": "08:00 - 17:00"
+  },
+  {
+    "id": "rumah-adat-baloy-tanjung-selor",
+    "name": "Rumah Adat Baloy",
+    "location": "Tanjung Selor, Bulungan",
+    "category": "budaya",
+    "description": "Replika rumah adat suku Dayak Tidung, yang merupakan salah satu suku asli di Kaltara. Digunakan sebagai pusat kegiatan budaya dan pameran kesenian tradisional. Menjadi ikon budaya di Tanjung Selor.",
+    "rating": 4.0,
+    "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1565715302109-2348a3a2c58d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=800&h=600&fit=crop"
+    ],
+    "coordinates": {
+      "lat": 2.84,
+      "lng": 117.13
+    },
+    "facilities": ["Cultural Center", "Exhibition Hall", "Parking", "Toilet"],
+    "bestTimeToVisit": "Selama acara budaya",
+    "ticketPrice": "IDR 10,000",
+    "openingHours": "08:00 - 16:00"
+  }
+]
