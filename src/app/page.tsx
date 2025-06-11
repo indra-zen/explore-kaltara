@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import Header from "@/components/Header";
 import destinations from '@/data/destinations.json';
 import hotels from '@/data/hotels.json';
 
@@ -20,28 +21,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
-      {/* Header/Navigation */}
-      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EK</span>
-              </div>
-              <span className="text-2xl font-bold text-emerald-800">Explore Kaltara</span>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/destinations" className="text-gray-700 hover:text-emerald-600 transition-colors">Destinasi</Link>
-              <Link href="/hotels" className="text-gray-700 hover:text-emerald-600 transition-colors">Hotel</Link>
-              <a href="#culture" className="text-gray-700 hover:text-emerald-600 transition-colors">Budaya</a>
-              <a href="#contact" className="text-gray-700 hover:text-emerald-600 transition-colors">Kontak</a>
-            </nav>
-            <button className="bg-emerald-600 text-white px-6 py-2 rounded-full hover:bg-emerald-700 transition-colors">
-              Jelajahi Sekarang
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -252,6 +232,84 @@ export default function Home() {
             <div>
               <div className="text-4xl md:text-5xl font-bold mb-2">4.5★</div>
               <div className="text-emerald-100">Rating Rata-rata</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Map Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Jelajahi dengan Peta
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              Temukan lokasi destinasi wisata dan hotel secara visual dengan peta interaktif kami
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mt-1">
+                    <span className="text-2xl">🗺️</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Peta Interaktif</h3>
+                    <p className="text-gray-600">Lihat semua lokasi destinasi dan hotel dalam satu tampilan peta yang mudah digunakan</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mt-1">
+                    <span className="text-2xl">📍</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Lokasi Akurat</h3>
+                    <p className="text-gray-600">Koordinat GPS yang akurat untuk setiap destinasi dan hotel</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mt-1">
+                    <span className="text-2xl">🔍</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Filter Lokasi</h3>
+                    <p className="text-gray-600">Filter berdasarkan kabupaten/kota untuk memudahkan perencanaan perjalanan</p>
+                  </div>
+                </div>
+              </div>
+
+              <Link href="/map" className="inline-flex items-center bg-emerald-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-emerald-700 transition-all transform hover:scale-105 mt-8">
+                Buka Peta Interaktif
+                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="relative">
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-8 text-white">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">🗺️</div>
+                  <h3 className="text-2xl font-bold mb-4">Peta Kalimantan Utara</h3>
+                  <p className="text-emerald-100 mb-6">Jelajahi {featuredDestinations.length + featuredHotels.length}+ lokasi wisata dan hotel</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div className="bg-white/20 rounded-lg p-4">
+                      <div className="text-2xl font-bold">{featuredDestinations.length}+</div>
+                      <div className="text-sm">Destinasi</div>
+                    </div>
+                    <div className="bg-white/20 rounded-lg p-4">
+                      <div className="text-2xl font-bold">{featuredHotels.length}+</div>
+                      <div className="text-sm">Hotel</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

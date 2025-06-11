@@ -2,6 +2,9 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import hotels from '@/data/hotels.json';
+import Map from '@/components/Map';
+import Header from '@/components/Header';
+import WishlistButton from '@/components/WishlistButton';
 
 interface HotelPageProps {
   params: Promise<{ slug: string }>;
@@ -266,14 +269,20 @@ export default async function HotelPage({ params }: HotelPageProps) {
             {/* Location */}
             <div className="bg-gray-100 rounded-2xl p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Lokasi</h3>
-              <div className="h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <svg className="w-8 h-8 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm">Peta lokasi akan segera hadir</p>
-                  <p className="text-xs mt-1">Lat: {hotel.coordinates.lat}, Lng: {hotel.coordinates.lng}</p>
-                </div>
+              <Map
+                center={[hotel.coordinates.lat, hotel.coordinates.lng]}
+                zoom={15}
+                markers={[{
+                  position: [hotel.coordinates.lat, hotel.coordinates.lng],
+                  title: hotel.name,
+                  description: hotel.address,
+                  link: `#`
+                }]}
+                height="300px"
+              />
+              <div className="mt-3 text-sm text-gray-600">
+                <p>📍 {hotel.address}</p>
+                <p className="text-xs mt-1">Koordinat: {hotel.coordinates.lat}, {hotel.coordinates.lng}</p>
               </div>
             </div>
           </div>
