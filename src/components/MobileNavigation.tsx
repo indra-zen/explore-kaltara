@@ -12,7 +12,10 @@ import {
   Building2, 
   Map, 
   Heart, 
-  Search 
+  Search,
+  BookOpen,
+  Calendar,
+  CloudSun
 } from 'lucide-react';
 import MobileSearchModal from './MobileSearchModal';
 
@@ -32,7 +35,10 @@ export default function MobileNavigation() {
     { href: '/', label: 'Beranda', icon: Home },
     { href: '/destinations', label: 'Destinasi', icon: MapPin },
     { href: '/hotels', label: 'Hotel', icon: Building2 },
+    { href: '/blog', label: 'Blog', icon: BookOpen },
     { href: '/map', label: 'Peta', icon: Map },
+    { href: '/trip-planner', label: 'Trip Planner', icon: Calendar },
+    { href: '/weather', label: 'Cuaca', icon: CloudSun },
     { href: '/wishlist', label: 'Wishlist', icon: Heart, badge: wishlistCount },
   ];
 

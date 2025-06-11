@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
+import { SkeletonGrid } from '@/components/SkeletonCards';
+import { SectionLoading } from '@/components/LoadingState';
 import destinations from '@/data/destinations.json';
 
 export default function DestinationsPage() {
@@ -12,14 +14,26 @@ export default function DestinationsPage() {
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [minRating, setMinRating] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
 
   // Get unique locations and categories
   const locations = [...new Set(destinations.map(d => d.location))];
   const categories = [...new Set(destinations.map(d => d.category))];
 
-  // Filtered destinations
+  // Simulate initial loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Filtered destinations with debounced filtering
   const filteredDestinations = useMemo(() => {
-    return destinations.filter(destination => {
+    setIsFiltering(true);
+    
+    const filtered = destinations.filter(destination => {
       const matchesSearch = destination.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            destination.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            destination.location.toLowerCase().includes(searchQuery.toLowerCase());
@@ -30,6 +44,13 @@ export default function DestinationsPage() {
 
       return matchesSearch && matchesLocation && matchesCategory && matchesRating;
     });
+
+    // Simulate filtering delay for better UX
+    const timer = setTimeout(() => {
+      setIsFiltering(false);
+    }, 300);
+
+    return filtered;
   }, [searchQuery, selectedLocation, selectedCategory, minRating]);
 
   return (
@@ -131,7 +152,11 @@ export default function DestinationsPage() {
 
           {/* Destinations Grid */}
           <div className="lg:col-span-3">
-            {filteredDestinations.length === 0 ? (
+            {isLoading ? (
+              <SkeletonGrid type="destination" count={6} />
+            ) : isFiltering ? (
+              <SectionLoading message="Memfilter destinasi..." />
+            ) : filteredDestinations.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Tidak ada destinasi ditemukan</h3>
@@ -140,7 +165,7 @@ export default function DestinationsPage() {
             ) : (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredDestinations.map((destination) => (
-                  <div key={destination.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+                  <div key={destination.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
                     <div className="relative h-48 overflow-hidden">
                       <Link href={`/destinations/${destination.id}`}>
                         <Image
@@ -148,8 +173,13 @@ export default function DestinationsPage() {
                           alt={destination.name}
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          priority={false}
+                          loading="lazy"
                         />
                       </Link>
+                      {/* ...existing overlay content... */}
+                      {/* ...existing overlay content... */}
                       <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
                         <span className="text-yellow-500">★</span>
                         <span className="ml-1 font-semibold">{destination.rating}</span>

@@ -6,10 +6,14 @@ Platform terdepan untuk menjelajahi keindahan Kalimantan Utara. Temukan pesona a
 
 - 🗺️ **Destinasi Wisata Lengkap** - Jelajahi tempat-tempat menakjubkan di Kaltara
 - 🏨 **Hotel & Penginapan** - Temukan akomodasi terbaik untuk perjalanan Anda
-- 🔍 **Search & Filter** - Cari dan filter destinasi/hotel berdasarkan preferensi
+- 🗓️ **Trip Planner** - Rencanakan perjalanan lengkap dengan budget dan itinerary
+- 🌤️ **Weather Integration** - Informasi cuaca real-time untuk semua lokasi
+- 👤 **User Authentication** - Profil personal dengan preferensi perjalanan
+- 🔍 **Advanced Search & Filter** - Cari dan filter berdasarkan berbagai kriteria
 - 📱 **Responsive Design** - Optimal di semua perangkat
 - 🎨 **Modern UI/UX** - Antarmuka yang indah dan mudah digunakan
 - ⚡ **Performance Optimized** - Dibangun dengan Next.js 15 dan Turbopack
+- 💾 **Wishlist System** - Simpan destinasi dan hotel favorit
 
 ## 🗺️ Wilayah yang Dicakup
 

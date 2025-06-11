@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
+import { SkeletonGrid } from '@/components/SkeletonCards';
+import { SectionLoading } from '@/components/LoadingState';
 import hotels from '@/data/hotels.json';
 
 export default function HotelsPage() {
@@ -13,10 +15,20 @@ export default function HotelsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [minRating, setMinRating] = useState(0);
   const [maxPrice, setMaxPrice] = useState(2000000);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
 
   // Get unique locations and categories
   const locations = [...new Set(hotels.map(h => h.location))];
   const categories = [...new Set(hotels.map(h => h.category))];
+
+  // Simulate initial loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Extract price range for filtering
   const getPriceRange = (priceRange: string) => {
@@ -26,9 +38,11 @@ export default function HotelsPage() {
     return Math.max(...prices);
   };
 
-  // Filtered hotels
+  // Filtered hotels with loading states
   const filteredHotels = useMemo(() => {
-    return hotels.filter(hotel => {
+    setIsFiltering(true);
+    
+    const filtered = hotels.filter(hotel => {
       const matchesSearch = hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            hotel.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            hotel.location.toLowerCase().includes(searchQuery.toLowerCase());
@@ -41,6 +55,13 @@ export default function HotelsPage() {
 
       return matchesSearch && matchesLocation && matchesCategory && matchesRating && matchesPrice;
     });
+
+    // Simulate filtering delay
+    const timer = setTimeout(() => {
+      setIsFiltering(false);
+    }, 300);
+
+    return filtered;
   }, [searchQuery, selectedLocation, selectedCategory, minRating, maxPrice]);
 
   const formatPrice = (price: number) => {
@@ -171,7 +192,11 @@ export default function HotelsPage() {
 
           {/* Hotels Grid */}
           <div className="lg:col-span-3">
-            {filteredHotels.length === 0 ? (
+            {isLoading ? (
+              <SkeletonGrid type="hotel" count={6} />
+            ) : isFiltering ? (
+              <SectionLoading message="Memfilter hotel..." />
+            ) : filteredHotels.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🏨</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Tidak ada hotel ditemukan</h3>
@@ -180,14 +205,17 @@ export default function HotelsPage() {
             ) : (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredHotels.map((hotel) => (
-                  <div key={hotel.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+                  <div key={hotel.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
                     <div className="relative h-48 overflow-hidden">
                       <Link href={`/hotels/${hotel.id}`}>
                         <Image
                           src={hotel.image}
                           alt={hotel.name}
                           fill
-                          className="object-cover"
+                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          priority={false}
+                          loading="lazy"
                         />
                       </Link>
                       <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">

@@ -5,6 +5,7 @@ import destinations from '@/data/destinations.json';
 import Map from '@/components/Map';
 import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
+import WeatherWidget from '@/components/WeatherWidget';
 
 interface DestinationPageProps {
   params: Promise<{ slug: string }>;
@@ -180,6 +181,12 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
               </div>
             </div>
 
+            {/* Weather Widget */}
+            <div className="mb-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Cuaca Terkini</h3>
+              <WeatherWidget location={destination.location} />
+            </div>
+
             {/* Map Placeholder */}
             <div className="bg-gray-100 rounded-2xl p-6 mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Lokasi</h3>
@@ -201,9 +208,12 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <button className="w-full bg-emerald-600 text-white py-3 rounded-full font-semibold hover:bg-emerald-700 transition-colors">
-                Bagikan Destinasi
-              </button>
+              <Link 
+                href={`/booking?item=${destination.id}&type=destination`}
+                className="block w-full bg-emerald-600 text-white py-3 rounded-full font-semibold hover:bg-emerald-700 transition-colors text-center"
+              >
+                Pesan Aktivitas
+              </Link>
               <button className="w-full border-2 border-emerald-600 text-emerald-600 py-3 rounded-full font-semibold hover:bg-emerald-600 hover:text-white transition-colors">
                 Simpan ke Wishlist
               </button>

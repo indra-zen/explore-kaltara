@@ -235,9 +235,12 @@ export default async function HotelPage({ params }: HotelPageProps) {
                   </div>
                 </div>
 
-                <button className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors">
+                <Link 
+                  href={`/booking?item=${hotel.id}&type=hotel`}
+                  className="block w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors text-center"
+                >
                   Pesan Sekarang
-                </button>
+                </Link>
                 
                 <div className="text-center text-sm text-gray-600">
                   Check-in: {hotel.checkIn} | Check-out: {hotel.checkOut}
