@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import Header from '@/components/Header';
+import WishlistButton from '@/components/WishlistButton';
 import hotels from '@/data/hotels.json';
 
 export default function HotelsPage() {
@@ -47,24 +49,7 @@ export default function HotelsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EK</span>
-              </div>
-              <span className="text-2xl font-bold text-emerald-800">Explore Kaltara</span>
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/destinations" className="text-gray-700 hover:text-emerald-600 transition-colors">Destinasi</Link>
-              <Link href="/hotels" className="text-emerald-600 font-semibold">Hotel</Link>
-              <Link href="/#culture" className="text-gray-700 hover:text-emerald-600 transition-colors">Budaya</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Page Header */}
       <div className="bg-emerald-600 text-white py-16">
@@ -195,56 +180,73 @@ export default function HotelsPage() {
             ) : (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredHotels.map((hotel) => (
-                  <Link key={hotel.id} href={`/hotels/${hotel.id}`} className="group">
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                      <div className="relative h-48 overflow-hidden">
+                  <div key={hotel.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+                    <div className="relative h-48 overflow-hidden">
+                      <Link href={`/hotels/${hotel.id}`}>
                         <Image
                           src={hotel.image}
                           alt={hotel.name}
                           fill
                           className="object-cover"
                         />
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                          <span className="text-yellow-500">★</span>
-                          <span className="ml-1 font-semibold">{hotel.rating}</span>
-                        </div>
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-emerald-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                            {hotel.category.replace('-', ' ').toUpperCase()}
-                          </span>
-                        </div>
+                      </Link>
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                        <span className="text-yellow-500">★</span>
+                        <span className="ml-1 font-semibold">{hotel.rating}</span>
                       </div>
-                      <div className="p-5">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">{hotel.name}</h3>
-                            <p className="text-emerald-600 text-sm font-semibold">{hotel.location}</p>
-                          </div>
-                        </div>
-                        
-                        <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">{hotel.description}</p>
-                        
-                        {/* Amenities Icons */}
-                        <div className="flex gap-2 mb-3">
-                          {hotel.amenities.wifi && <span className="text-xs">📶</span>}
-                          {hotel.amenities.pool && <span className="text-xs">🏊</span>}
-                          {hotel.amenities.gym && <span className="text-xs">💪</span>}
-                          {hotel.amenities.restaurant && <span className="text-xs">🍽️</span>}
-                          {hotel.amenities.parking && <span className="text-xs">🅿️</span>}
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="text-emerald-600 font-bold">{hotel.priceRange.split(' - ')[0]}</span>
-                            <span className="text-gray-500 text-xs block">per malam</span>
-                          </div>
-                          <span className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">
-                            Lihat Detail →
-                          </span>
-                        </div>
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-emerald-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                          {hotel.category.replace('-', ' ').toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-4 right-4">
+                        <WishlistButton 
+                          item={{
+                            id: hotel.id,
+                            name: hotel.name,
+                            type: 'hotel',
+                            location: hotel.location,
+                            image: hotel.image,
+                            rating: hotel.rating,
+                            description: hotel.description,
+                            priceRange: hotel.priceRange
+                          }}
+                        />
                       </div>
                     </div>
-                  </Link>
+                    <div className="p-5">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">{hotel.name}</h3>
+                          <p className="text-emerald-600 text-sm font-semibold">{hotel.location}</p>
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">{hotel.description}</p>
+                      
+                      {/* Amenities Icons */}
+                      <div className="flex gap-2 mb-3">
+                        {hotel.amenities.wifi && <span className="text-xs">📶</span>}
+                        {hotel.amenities.pool && <span className="text-xs">🏊</span>}
+                        {hotel.amenities.gym && <span className="text-xs">💪</span>}
+                        {hotel.amenities.restaurant && <span className="text-xs">🍽️</span>}
+                        {hotel.amenities.parking && <span className="text-xs">🅿️</span>}
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="text-emerald-600 font-bold">{hotel.priceRange.split(' - ')[0]}</span>
+                          <span className="text-gray-500 text-xs block">per malam</span>
+                        </div>
+                        <Link 
+                          href={`/hotels/${hotel.id}`}
+                          className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors"
+                        >
+                          Lihat Detail →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Header from '@/components/Header';
 import destinations from '@/data/destinations.json';
 import hotels from '@/data/hotels.json';
 import Map from '@/components/Map';
@@ -47,24 +48,7 @@ export default function InteractiveMapPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EK</span>
-              </div>
-              <span className="text-2xl font-bold text-emerald-800">Explore Kaltara</span>
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/destinations" className="text-gray-700 hover:text-emerald-600 transition-colors">Destinasi</Link>
-              <Link href="/hotels" className="text-gray-700 hover:text-emerald-600 transition-colors">Hotel</Link>
-              <Link href="/map" className="text-emerald-600 font-semibold">Peta</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Page Header */}
       <div className="bg-emerald-600 text-white py-16">

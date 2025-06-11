@@ -42,24 +42,7 @@ export default async function HotelPage({ params }: HotelPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EK</span>
-              </div>
-              <span className="text-2xl font-bold text-emerald-800">Explore Kaltara</span>
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/#destinations" className="text-gray-700 hover:text-emerald-600 transition-colors">Destinasi</Link>
-              <Link href="/#hotels" className="text-gray-700 hover:text-emerald-600 transition-colors">Hotel</Link>
-              <Link href="/#culture" className="text-gray-700 hover:text-emerald-600 transition-colors">Budaya</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Breadcrumb */}
       <div className="bg-gray-50 py-4">
@@ -96,6 +79,24 @@ export default async function HotelPage({ params }: HotelPageProps) {
           priority
         />
         <div className="absolute inset-0 bg-black/30"></div>
+        
+        {/* Wishlist Button */}
+        <div className="absolute top-8 right-8">
+          <WishlistButton 
+            item={{
+              id: hotel.id,
+              name: hotel.name,
+              type: 'hotel',
+              location: hotel.location,
+              image: hotel.image,
+              rating: hotel.rating,
+              description: hotel.description,
+              priceRange: hotel.priceRange
+            }}
+            showText={true}
+          />
+        </div>
+        
         <div className="absolute bottom-8 left-8 text-white">
           <div className="inline-block bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold mb-4">
             {hotel.category.replace('-', ' ').toUpperCase()}

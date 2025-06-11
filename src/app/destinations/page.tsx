@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import Header from '@/components/Header';
+import WishlistButton from '@/components/WishlistButton';
 import destinations from '@/data/destinations.json';
 
 export default function DestinationsPage() {
@@ -32,24 +34,7 @@ export default function DestinationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EK</span>
-              </div>
-              <span className="text-2xl font-bold text-emerald-800">Explore Kaltara</span>
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/destinations" className="text-emerald-600 font-semibold">Destinasi</Link>
-              <Link href="/hotels" className="text-gray-700 hover:text-emerald-600 transition-colors">Hotel</Link>
-              <Link href="/#culture" className="text-gray-700 hover:text-emerald-600 transition-colors">Budaya</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Page Header */}
       <div className="bg-emerald-600 text-white py-16">
@@ -155,38 +140,54 @@ export default function DestinationsPage() {
             ) : (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredDestinations.map((destination) => (
-                  <Link key={destination.id} href={`/destinations/${destination.id}`} className="group">
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                      <div className="relative h-48 overflow-hidden">
+                  <div key={destination.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+                    <div className="relative h-48 overflow-hidden">
+                      <Link href={`/destinations/${destination.id}`}>
                         <Image
                           src={destination.image}
                           alt={destination.name}
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-300"
                         />
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                          <span className="text-yellow-500">★</span>
-                          <span className="ml-1 font-semibold">{destination.rating}</span>
-                        </div>
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-emerald-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                            {destination.category === 'alam' ? 'Alam' : 'Budaya'}
-                          </span>
-                        </div>
+                      </Link>
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                        <span className="text-yellow-500">★</span>
+                        <span className="ml-1 font-semibold">{destination.rating}</span>
                       </div>
-                      <div className="p-5">
-                        <div className="text-emerald-600 text-sm font-semibold mb-2">{destination.location}</div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{destination.name}</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-3">{destination.description}</p>
-                        <div className="flex justify-between items-center">
-                          <span className="text-emerald-600 font-semibold">{destination.ticketPrice}</span>
-                          <span className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">
-                            Selengkapnya →
-                          </span>
-                        </div>
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-emerald-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                          {destination.category === 'alam' ? 'Alam' : 'Budaya'}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-4 right-4">
+                        <WishlistButton 
+                          item={{
+                            id: destination.id,
+                            name: destination.name,
+                            type: 'destination',
+                            location: destination.location,
+                            image: destination.image,
+                            rating: destination.rating,
+                            description: destination.description
+                          }}
+                        />
                       </div>
                     </div>
-                  </Link>
+                    <div className="p-5">
+                      <div className="text-emerald-600 text-sm font-semibold mb-2">{destination.location}</div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{destination.name}</h3>
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-3">{destination.description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-emerald-600 font-semibold">{destination.ticketPrice}</span>
+                        <Link 
+                          href={`/destinations/${destination.id}`}
+                          className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors"
+                        >
+                          Selengkapnya →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

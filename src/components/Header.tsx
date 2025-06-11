@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { Heart, MapPin, Building2, Map } from 'lucide-react';
+import GlobalSearch from './GlobalSearch';
 
 export default function Header() {
   const { wishlistCount } = useWishlist();
@@ -12,12 +13,17 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <MapPin className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-800">Explore Kaltara</span>
           </Link>
+          
+          {/* Search - Desktop & Mobile */}
+          <div className="flex-1 max-w-md mx-4">
+            <GlobalSearch />
+          </div>
           
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
