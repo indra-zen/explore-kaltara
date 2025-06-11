@@ -124,3 +124,33 @@ input[type="range"]::-moz-range-thumb {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Mobile Navigation Styles */
+@media (max-width: 767px) {
+  /* Add bottom padding to main content to avoid bottom navigation overlap */
+  main, .min-h-screen {
+    padding-bottom: 80px;
+  }
+  
+  /* Ensure body has proper padding for mobile navigation */
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mobile-first touch targets */
+@media (max-width: 767px) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Smooth transitions for mobile interactions */
+.mobile-nav-item {
+  transition: all 0.3s ease;
+}
+
+.mobile-nav-item:active {
+  transform: scale(0.95);
+}
