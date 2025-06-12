@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Menu, 
   X, 
@@ -15,15 +16,21 @@ import {
   Search,
   BookOpen,
   Calendar,
-  CloudSun
+  CloudSun,
+  User,
+  LogOut,
+  Settings
 } from 'lucide-react';
 import MobileSearchModal from './MobileSearchModal';
+import AuthModal from './AuthModal';
 
 export default function MobileNavigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const { wishlistCount } = useWishlist();
+  const { user, isAuthenticated, logout } = useAuth();
   const pathname = usePathname();
 
   // Fix hydration mismatch
@@ -71,6 +78,31 @@ export default function MobileNavigation() {
             >
               <Search className="w-5 h-5" />
             </button>
+            
+            {/* User Auth Button */}
+            {isAuthenticated ? (
+              <Link href="/profile" className="flex items-center space-x-1">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="bg-emerald-600 text-white px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
+              >
+                Masuk
+              </button>
+            )}
+            
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
@@ -130,6 +162,65 @@ export default function MobileNavigation() {
                   </Link>
                 );
               })}
+              
+              {/* User Section */}
+              <div className="border-t mt-4 pt-4">
+                {isAuthenticated ? (
+                  <>
+                    {/* User Profile */}
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center px-6 py-4 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center space-x-3">
+                        {user?.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+                            <User className="w-4 h-4 text-white" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-semibold">{user?.name}</div>
+                          <div className="text-sm text-gray-500">Lihat Profil</div>
+                        </div>
+                      </div>
+                    </Link>
+                    
+                    {/* Logout */}
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center px-6 py-4 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors w-full text-left"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <LogOut className="w-6 h-6" />
+                        <span>Logout</span>
+                      </div>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowAuthModal(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center px-6 py-4 text-base font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors w-full text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <User className="w-6 h-6" />
+                      <span>Masuk / Daftar</span>
+                    </div>
+                  </button>
+                )}
+              </div>
             </nav>
           </div>
         </>
@@ -138,7 +229,7 @@ export default function MobileNavigation() {
       {/* Bottom Navigation Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-40">
         <nav className="flex items-center justify-around py-2">
-          {navItems.slice(0, 5).map((item) => {
+          {navItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
             return (
               <Link
@@ -162,6 +253,39 @@ export default function MobileNavigation() {
               </Link>
             );
           })}
+          
+          {/* Profile/Login Button in Bottom Nav */}
+          {isAuthenticated ? (
+            <Link
+              href="/profile"
+              className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${
+                isActive('/profile')
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
+              }`}
+            >
+              <div className="relative">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-5 h-5 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-5 h-5" />
+                )}
+              </div>
+              <span className="text-xs font-medium">Profil</span>
+            </Link>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors text-emerald-600 hover:text-emerald-700"
+            >
+              <User className="w-5 h-5" />
+              <span className="text-xs font-medium">Masuk</span>
+            </button>
+          )}
         </nav>
       </div>
 
@@ -169,6 +293,12 @@ export default function MobileNavigation() {
       <MobileSearchModal 
         isOpen={isSearchOpen} 
         onClose={() => setIsSearchOpen(false)} 
+      />
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
       />
     </>
   );
