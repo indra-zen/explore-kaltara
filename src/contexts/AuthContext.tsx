@@ -67,13 +67,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Check if user is logged in from localStorage
-    const savedUser = localStorage.getItem('kaltara-user');
-    if (savedUser) {
-      try {
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      const savedUser = localStorage.getItem('kaltara-user');
+      if (savedUser) {
         setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
+      }
+    } catch (error) {
+      console.error('Error parsing saved user:', error);
+      try {
         localStorage.removeItem('kaltara-user');
+      } catch (e) {
+        console.error('Error removing corrupted user data:', e);
       }
     }
     setIsLoading(false);
@@ -98,7 +107,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       };
       
       setUser(userWithoutPassword);
-      localStorage.setItem('kaltara-user', JSON.stringify(userWithoutPassword));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('kaltara-user', JSON.stringify(userWithoutPassword));
+      }
       setIsLoading(false);
       
       return { success: true, message: 'Login berhasil!' };
@@ -139,7 +150,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     mockUsers.push({ ...newUser, password } as any);
     
     setUser(newUser);
-    localStorage.setItem('kaltara-user', JSON.stringify(newUser));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('kaltara-user', JSON.stringify(newUser));
+    }
     setIsLoading(false);
     
     return { success: true, message: 'Registrasi berhasil!' };
@@ -147,7 +160,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('kaltara-user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('kaltara-user');
+    }
   };
 
   const updateProfile = async (updates: Partial<User>): Promise<boolean> => {
@@ -160,7 +175,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
-    localStorage.setItem('kaltara-user', JSON.stringify(updatedUser));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('kaltara-user', JSON.stringify(updatedUser));
+    }
     
     setIsLoading(false);
     return true;

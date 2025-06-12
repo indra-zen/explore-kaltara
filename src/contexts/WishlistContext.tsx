@@ -42,6 +42,11 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
 
   // Load wishlist from localStorage on mount
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      setIsLoaded(true);
+      return;
+    }
+    
     try {
       const savedWishlist = localStorage.getItem('explore-kaltara-wishlist');
       if (savedWishlist) {
@@ -56,12 +61,12 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
 
   // Save wishlist to localStorage whenever it changes
   useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem('explore-kaltara-wishlist', JSON.stringify(wishlistItems));
-      } catch (error) {
-        console.error('Error saving wishlist to localStorage:', error);
-      }
+    if (typeof window === 'undefined' || !isLoaded) return;
+    
+    try {
+      localStorage.setItem('explore-kaltara-wishlist', JSON.stringify(wishlistItems));
+    } catch (error) {
+      console.error('Error saving wishlist to localStorage:', error);
     }
   }, [wishlistItems, isLoaded]);
 

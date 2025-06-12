@@ -44,6 +44,11 @@ export default function BookingManager() {
   useEffect(() => {
     // Load bookings from localStorage
     const loadBookings = () => {
+      if (typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const savedBookings = localStorage.getItem('kaltara-bookings');
         if (savedBookings) {
@@ -154,7 +159,10 @@ Terima kasih telah menggunakan layanan Explore Kaltara!
           : booking
       );
       setBookings(updatedBookings);
-      localStorage.setItem('kaltara-bookings', JSON.stringify(updatedBookings));
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('kaltara-bookings', JSON.stringify(updatedBookings));
+      }
       
       // Show notification
       setNotification({
