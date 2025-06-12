@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import WeatherWidget from '@/components/WeatherWidget';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Header from '@/components/Header';
 import { CloudSun, MapPin, Calendar, TrendingUp, Info } from 'lucide-react';
 
 export default function WeatherPage() {
@@ -24,10 +25,13 @@ export default function WeatherPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
-        <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Memuat informasi cuaca...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+        <Header />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 80px)' }}>
+          <div className="text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-gray-600">Memuat informasi cuaca...</p>
+          </div>
         </div>
       </div>
     );
@@ -35,6 +39,7 @@ export default function WeatherPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">

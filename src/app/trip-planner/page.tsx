@@ -5,6 +5,7 @@ import { Calendar, MapPin, Clock, Users, Plus, X, Save, Download, Star } from 'l
 import destinationsData from '@/data/destinations.json';
 import hotelsData from '@/data/hotels.json';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Header from '@/components/Header';
 import Link from 'next/link';
 
 interface TripDay {
@@ -206,10 +207,13 @@ export default function TripPlannerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Memuat Trip Planner...</p>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50">
+        <Header />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 80px)' }}>
+          <div className="text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-gray-600">Memuat Trip Planner...</p>
+          </div>
         </div>
       </div>
     );
@@ -218,6 +222,7 @@ export default function TripPlannerPage() {
   if (!currentTrip && !showCreateForm) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="text-center mb-12">
@@ -316,6 +321,7 @@ export default function TripPlannerPage() {
   if (showCreateForm) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -438,6 +444,7 @@ export default function TripPlannerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
