@@ -308,12 +308,12 @@ function BookingContent() {
         id: newBookingId,
         userId: user.id,
         item: bookingItem,
-        bookingDetails: bookingForm,
-        paymentDetails: {
+        details: bookingForm,
+        payment: {
           ...paymentForm,
           cardNumber: paymentForm.cardNumber.substr(-4) // Only save last 4 digits
         },
-        totalAmount: calculateTotal(),
+        total: calculateTotal(),
         status: 'confirmed',
         createdAt: new Date().toISOString()
       };

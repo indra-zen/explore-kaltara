@@ -52,7 +52,32 @@ export default function BookingManager() {
       try {
         const savedBookings = localStorage.getItem('kaltara-bookings');
         if (savedBookings) {
-          setBookings(JSON.parse(savedBookings));
+          let bookings = JSON.parse(savedBookings);
+          
+          // Migrate old booking structure to new structure
+          bookings = bookings.map((booking: any) => {
+            // Check if booking uses old structure
+            if (booking.bookingDetails && !booking.details) {
+              return {
+                ...booking,
+                details: booking.bookingDetails,
+                payment: booking.paymentDetails || {},
+                total: booking.totalAmount || booking.total || 0
+              };
+            }
+            
+            // Ensure all required fields exist
+            return {
+              ...booking,
+              details: booking.details || {},
+              payment: booking.payment || {},
+              total: booking.total || 0
+            };
+          });
+          
+          // Save migrated bookings back to localStorage
+          localStorage.setItem('kaltara-bookings', JSON.stringify(bookings));
+          setBookings(bookings);
         }
       } catch (error) {
         console.error('Error loading bookings:', error);
@@ -64,9 +89,13 @@ export default function BookingManager() {
     loadBookings();
   }, []);
 
-  const filteredBookings = bookings.filter(booking => 
-    filter === 'all' || booking.status === filter
-  );
+  const filteredBookings = bookings.filter(booking => {
+    // Ensure booking has required properties
+    if (!booking || !booking.id || !booking.item) {
+      return false;
+    }
+    return filter === 'all' || booking.status === filter;
+  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -107,6 +136,12 @@ export default function BookingManager() {
   };
 
   const downloadBookingDetails = (booking: Booking) => {
+    // Ensure booking.details exists before accessing its properties
+    if (!booking.details) {
+      alert('Data booking tidak lengkap. Tidak dapat mengunduh detail.');
+      return;
+    }
+
     // Create a more detailed receipt text format
     const receiptText = `
 EXPLORE KALTARA - BOOKING RECEIPT
@@ -133,9 +168,9 @@ Tamu: ${booking.details.guests} orang
 Permintaan Khusus: ${booking.details.specialRequests || 'Tidak ada'}
 
 DETAIL PEMBAYARAN:
-Kartu: **** **** **** ${booking.payment.cardNumber.slice(-4)}
-Pemegang Kartu: ${booking.payment.cardHolder}
-Alamat Billing: ${booking.payment.billingAddress}, ${booking.payment.city} ${booking.payment.postalCode}
+Kartu: **** **** **** ${booking.payment?.cardNumber?.slice(-4) || '****'}
+Pemegang Kartu: ${booking.payment?.cardHolder || 'N/A'}
+Alamat Billing: ${booking.payment?.billingAddress || 'N/A'}, ${booking.payment?.city || 'N/A'} ${booking.payment?.postalCode || 'N/A'}
 
 TOTAL PEMBAYARAN: Rp ${booking.total.toLocaleString('id-ID')}
 
@@ -176,11 +211,16 @@ Terima kasih telah menggunakan layanan Explore Kaltara!
   };
 
   const calculateNights = (checkIn: string, checkOut?: string) => {
-    if (!checkOut) return 1;
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (!checkOut || !checkIn) return 1;
+    try {
+      const start = new Date(checkIn);
+      const end = new Date(checkOut);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } catch (error) {
+      console.error('Error calculating nights:', error);
+      return 1;
+    }
   };
 
   if (isLoading) {
@@ -304,9 +344,11 @@ Terima kasih telah menggunakan layanan Explore Kaltara!
                           <p className="text-gray-500">
                             {booking.item.type === 'hotel' ? 'Check-in' : 'Tanggal Kunjungan'}
                           </p>
-                          <p className="font-medium">{formatDate(booking.details.checkIn)}</p>
+                          <p className="font-medium">
+                            {booking.details?.checkIn ? formatDate(booking.details.checkIn) : 'N/A'}
+                          </p>
                         </div>
-                        {booking.details.checkOut && (
+                        {booking.details?.checkOut && (
                           <div>
                             <p className="text-gray-500">Check-out</p>
                             <p className="font-medium">{formatDate(booking.details.checkOut)}</p>
@@ -314,11 +356,11 @@ Terima kasih telah menggunakan layanan Explore Kaltara!
                         )}
                         <div>
                           <p className="text-gray-500">Tamu</p>
-                          <p className="font-medium">{booking.details.guests} orang</p>
+                          <p className="font-medium">{booking.details?.guests || 1} orang</p>
                         </div>
                       </div>
 
-                      {booking.details.specialRequests && (
+                      {booking.details?.specialRequests && (
                         <div className="mt-3">
                           <p className="text-gray-500 text-sm">Permintaan Khusus:</p>
                           <p className="text-sm text-gray-700">{booking.details.specialRequests}</p>
@@ -340,7 +382,7 @@ Terima kasih telah menggunakan layanan Explore Kaltara!
                     <p className="text-lg font-bold text-emerald-600">
                       Rp {booking.total.toLocaleString('id-ID')}
                     </p>
-                    {booking.item.type === 'hotel' && booking.details.checkOut && (
+                    {booking.item.type === 'hotel' && booking.details?.checkOut && booking.details?.checkIn && (
                       <p className="text-xs text-gray-500">
                         {calculateNights(booking.details.checkIn, booking.details.checkOut)} malam
                       </p>
