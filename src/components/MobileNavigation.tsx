@@ -14,7 +14,6 @@ import {
   Map, 
   Heart, 
   Search,
-  BookOpen,
   Calendar,
   CloudSun,
   User,
@@ -37,12 +36,10 @@ export default function MobileNavigation() {
   useEffect(() => {
     setIsClient(true);
   }, []);
-
   const navItems = [
     { href: '/', label: 'Beranda', icon: Home },
     { href: '/destinations', label: 'Destinasi', icon: MapPin },
     { href: '/hotels', label: 'Hotel', icon: Building2 },
-    { href: '/blog', label: 'Blog', icon: BookOpen },
     { href: '/map', label: 'Peta', icon: Map },
     { href: '/trip-planner', label: 'Trip Planner', icon: Calendar },
     { href: '/weather', label: 'Cuaca', icon: CloudSun },

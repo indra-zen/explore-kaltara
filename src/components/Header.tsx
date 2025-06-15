@@ -60,12 +60,6 @@ export default function Header() {
                 <span>Hotel</span>
               </Link>
               <Link 
-                href="/blog" 
-                className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                <span>Blog</span>
-              </Link>
-              <Link 
                 href="/map" 
                 className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors"
               >

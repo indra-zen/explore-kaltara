@@ -73,50 +73,15 @@ export function HotelCardSkeleton() {
   );
 }
 
-export function BlogCardSkeleton() {
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      {/* Image skeleton */}
-      <Skeleton height="200px" className="w-full" />
-      
-      <div className="p-6">
-        {/* Category skeleton */}
-        <Skeleton variant="rectangular" width="80px" height="24px" className="mb-3 rounded-full" />
-        
-        {/* Title skeleton */}
-        <Skeleton variant="text" className="mb-2" width="90%" />
-        
-        {/* Excerpt skeleton */}
-        <Skeleton variant="text" lines={3} className="mb-4" />
-        
-        {/* Meta info skeleton */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Skeleton variant="circular" width="16px" height="16px" />
-              <Skeleton variant="text" width="80px" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Skeleton variant="circular" width="16px" height="16px" />
-              <Skeleton variant="text" width="60px" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface SkeletonGridProps {
   count?: number;
-  type: 'destination' | 'hotel' | 'blog';
+  type: 'destination' | 'hotel';
 }
 
 export function SkeletonGrid({ count = 6, type }: SkeletonGridProps) {
   const SkeletonComponent = {
     destination: DestinationCardSkeleton,
-    hotel: HotelCardSkeleton,
-    blog: BlogCardSkeleton
+    hotel: HotelCardSkeleton
   }[type];
 
   return (
