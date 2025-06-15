@@ -1,29 +1,187 @@
 -- Sample data for admin dashboard testing
--- Run this in Supabase Dashboard → SQL Editor after creating the tables
+-- Run this in Supabase Dashboard → SQL Editor to update existing records
 
--- Insert sample destinations
-INSERT INTO public.destinations (name, slug, description, category, location, city, latitude, longitude, images, featured_image, rating, review_count, price_range, facilities, is_featured, status) VALUES
-('Hutan Mangrove Bekantan', 'hutan-mangrove-bekantan', 'Hutan mangrove yang menjadi habitat alami bekantan dan berbagai satwa endemik Kalimantan.', 'nature', 'Tarakan, Kalimantan Utara', 'Tarakan', 3.3272, 117.5914, ARRAY['/images/hutan-mangrove-bekantan-1.jpg', '/images/hutan-mangrove-bekantan-2.jpg'], '/images/hutan-mangrove-bekantan-1.jpg', 4.5, 89, 'budget', ARRAY['Jembatan kayu', 'Menara pandang', 'Toilet', 'Area parkir'], true, 'active'),
+-- Update sample destinations
+UPDATE public.destinations SET 
+    name = 'Hutan Mangrove Bekantan',
+    description = 'Hutan mangrove yang menjadi habitat alami bekantan dan berbagai satwa endemik Kalimantan.',
+    category = 'nature',
+    location = 'Tarakan, Kalimantan Utara',
+    city = 'Tarakan',
+    latitude = 3.3272,
+    longitude = 117.5914,
+    images = ARRAY['/images/hutan-mangrove-bekantan-1.jpg', '/images/hutan-mangrove-bekantan-2.jpg'],
+    featured_image = '/images/hutan-mangrove-bekantan-1.jpg',
+    rating = 4.5,
+    review_count = 89,
+    price_range = 'budget',
+    facilities = ARRAY['Jembatan kayu', 'Menara pandang', 'Toilet', 'Area parkir'],
+    is_featured = true,
+    status = 'active'
+WHERE slug = 'hutan-mangrove-bekantan';
 
-('Pantai Amal', 'pantai-amal', 'Pantai indah dengan pemandangan sunset yang memukau dan fasilitas lengkap untuk wisata keluarga.', 'nature', 'Tarakan, Kalimantan Utara', 'Tarakan', 3.2743, 117.6125, ARRAY['/images/pantai-amal-1.jpg', '/images/pantai-amal-2.jpg'], '/images/pantai-amal-1.jpg', 4.2, 67, 'budget', ARRAY['Gazebo', 'Area bermain', 'Warung makan', 'Toilet'], true, 'active'),
+UPDATE public.destinations SET 
+    name = 'Pantai Amal',
+    description = 'Pantai indah dengan pemandangan sunset yang memukau dan fasilitas lengkap untuk wisata keluarga.',
+    category = 'nature',
+    location = 'Tarakan, Kalimantan Utara',
+    city = 'Tarakan',
+    latitude = 3.2743,
+    longitude = 117.6125,
+    images = ARRAY['https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop',
+    rating = 4.2,
+    review_count = 67,
+    price_range = 'budget',
+    facilities = ARRAY['Gazebo', 'Area bermain', 'Warung makan', 'Toilet'],
+    is_featured = true,
+    status = 'active'
+WHERE slug = 'pantai-amal';
 
-('Pulau Bunyu', 'pulau-bunyu', 'Pulau kecil dengan pantai berpasir putih dan air laut yang jernih, cocok untuk snorkeling.', 'nature', 'Bunyu, Kalimantan Utara', 'Bunyu', 3.4612, 117.8734, ARRAY['/images/pulau-bunyu-1.jpg'], '/images/pulau-bunyu-1.jpg', 4.0, 45, 'mid-range', ARRAY['Penyewaan alat snorkel', 'Perahu', 'Homestay'], false, 'active'),
+UPDATE public.destinations SET 
+    name = 'Pulau Bunyu',
+    description = 'Pulau kecil dengan pantai berpasir putih dan air laut yang jernih, cocok untuk snorkeling.',
+    category = 'nature',
+    location = 'Bunyu, Kalimantan Utara',
+    city = 'Bunyu',
+    latitude = 3.4612,
+    longitude = 117.8734,
+    images = ARRAY['https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop',
+    rating = 4.0,
+    review_count = 45,
+    price_range = 'mid-range',
+    facilities = ARRAY['Penyewaan alat snorkel', 'Perahu', 'Homestay'],
+    is_featured = false,
+    status = 'active'
+WHERE slug = 'pulau-bunyu';
 
-('Taman Nasional Kayan Mentarang', 'taman-nasional-kayan-mentarang', 'Taman nasional dengan keanekaragaman hayati tinggi dan budaya Dayak yang masih lestari.', 'nature', 'Malinau, Kalimantan Utara', 'Malinau', 2.9167, 116.0000, ARRAY['/images/kayan-mentarang-1.jpg'], '/images/kayan-mentarang-1.jpg', 4.7, 34, 'expensive', ARRAY['Pemandu wisata', 'Trekking trail', 'Camping ground'], false, 'active'),
+UPDATE public.destinations SET 
+    name = 'Taman Nasional Kayan Mentarang',
+    description = 'Taman nasional dengan keanekaragaman hayati tinggi dan budaya Dayak yang masih lestari.',
+    category = 'nature',
+    location = 'Malinau, Kalimantan Utara',
+    city = 'Malinau',
+    latitude = 2.9167,
+    longitude = 116.0000,
+    images = ARRAY['https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop',
+    rating = 4.7,
+    review_count = 34,
+    price_range = 'expensive',
+    facilities = ARRAY['Pemandu wisata', 'Trekking trail', 'Camping ground'],
+    is_featured = false,
+    status = 'active'
+WHERE slug = 'taman-nasional-kayan-mentarang';
 
-('Museum Baloy Mayo', 'museum-baloy-mayo', 'Museum yang menampilkan sejarah dan budaya masyarakat Tidung dan Dayak di Kalimantan Utara.', 'culture', 'Tanjung Selor, Kalimantan Utara', 'Tanjung Selor', 2.8375, 117.3542, ARRAY['/images/museum-baloy-mayo-1.jpg'], '/images/museum-baloy-mayo-1.jpg', 3.8, 28, 'budget', ARRAY['Koleksi artefak', 'Pemandu museum', 'Ruang audio visual'], false, 'active');
+UPDATE public.destinations SET 
+    name = 'Museum Baloy Mayo',
+    description = 'Museum yang menampilkan sejarah dan budaya masyarakat Tidung dan Dayak di Kalimantan Utara.',
+    category = 'culture',
+    location = 'Tanjung Selor, Kalimantan Utara',
+    city = 'Tanjung Selor',
+    latitude = 2.8375,
+    longitude = 117.3542,
+    images = ARRAY['https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
+    rating = 3.8,
+    review_count = 28,
+    price_range = 'budget',
+    facilities = ARRAY['Koleksi artefak', 'Pemandu museum', 'Ruang audio visual'],
+    is_featured = false,
+    status = 'active'
+WHERE slug = 'museum-baloy-mayo';
 
--- Insert sample hotels
-INSERT INTO public.hotels (name, slug, description, star_rating, location, city, latitude, longitude, images, featured_image, rating, review_count, price_per_night, amenities, is_featured, status) VALUES
-('Swiss-Belhotel Tarakan', 'swiss-belhotel-tarakan', 'Hotel bintang 4 dengan fasilitas modern dan pemandangan laut yang indah di pusat kota Tarakan.', 4, 'Jl. Yos Sudarso No. 1, Tarakan', 'Tarakan', 3.3017, 117.6386, ARRAY['/images/swiss-belhotel-1.jpg', '/images/swiss-belhotel-2.jpg'], '/images/swiss-belhotel-1.jpg', 4.3, 156, 850000, ARRAY['WiFi gratis', 'Kolam renang', 'Fitness center', 'Restaurant', 'Room service', 'Spa'], true, 'active'),
+-- Update sample hotels
+UPDATE public.hotels SET 
+    name = 'Swiss-Belhotel Tarakan',
+    description = 'Hotel bintang 4 dengan fasilitas modern dan pemandangan laut yang indah di pusat kota Tarakan.',
+    star_rating = 4,
+    location = 'Jl. Yos Sudarso No. 1, Tarakan',
+    city = 'Tarakan',
+    latitude = 3.3017,
+    longitude = 117.6386,
+    images = ARRAY['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
+    rating = 4.3,
+    review_count = 156,
+    price_per_night = 850000,
+    amenities = ARRAY['WiFi gratis', 'Kolam renang', 'Fitness center', 'Restaurant', 'Room service', 'Spa'],
+    is_featured = true,
+    status = 'active'
+WHERE slug = 'swiss-belhotel-tarakan';
 
-('Hotel Perdana Tarakan', 'hotel-perdana-tarakan', 'Hotel nyaman dengan harga terjangkau di pusat kota Tarakan, dekat dengan berbagai tempat wisata.', 3, 'Jl. Mulawarman No. 15, Tarakan', 'Tarakan', 3.2987, 117.6354, ARRAY['/images/hotel-perdana-1.jpg'], '/images/hotel-perdana-1.jpg', 3.9, 89, 450000, ARRAY['WiFi gratis', 'AC', 'TV', 'Restaurant', 'Laundry'], false, 'active'),
+UPDATE public.hotels SET 
+    name = 'Hotel Perdana Tarakan',
+    description = 'Hotel nyaman dengan harga terjangkau di pusat kota Tarakan, dekat dengan berbagai tempat wisata.',
+    star_rating = 3,
+    location = 'Jl. Mulawarman No. 15, Tarakan',
+    city = 'Tarakan',
+    latitude = 3.2987,
+    longitude = 117.6354,
+    images = ARRAY['https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop',
+    rating = 3.9,
+    review_count = 89,
+    price_per_night = 450000,
+    amenities = ARRAY['WiFi gratis', 'AC', 'TV', 'Restaurant', 'Laundry'],
+    is_featured = false,
+    status = 'active'
+WHERE slug = 'hotel-perdana-tarakan';
 
-('Tarakan Plaza Hotel', 'tarakan-plaza-hotel', 'Hotel bisnis dengan fasilitas lengkap dan lokasi strategis di pusat perdagangan Tarakan.', 3, 'Jl. Sudirman No. 38, Tarakan', 'Tarakan', 3.3043, 117.6401, ARRAY['/images/tarakan-plaza-1.jpg'], '/images/tarakan-plaza-1.jpg', 4.0, 112, 650000, ARRAY['WiFi gratis', 'Business center', 'Meeting room', 'Restaurant', 'Parking'], true, 'active'),
+UPDATE public.hotels SET 
+    name = 'Tarakan Plaza Hotel',
+    description = 'Hotel bisnis dengan fasilitas lengkap dan lokasi strategis di pusat perdagangan Tarakan.',
+    star_rating = 3,
+    location = 'Jl. Sudirman No. 38, Tarakan',
+    city = 'Tarakan',
+    latitude = 3.3043,
+    longitude = 117.6401,
+    images = ARRAY['https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800&h=600&fit=crop',
+    rating = 4.0,
+    review_count = 112,
+    price_per_night = 650000,
+    amenities = ARRAY['WiFi gratis', 'Business center', 'Meeting room', 'Restaurant', 'Parking'],
+    is_featured = true,
+    status = 'active'
+WHERE slug = 'tarakan-plaza-hotel';
 
-('Green Garden Hotel', 'green-garden-hotel', 'Hotel ramah lingkungan dengan taman yang asri dan suasana tenang untuk liburan keluarga.', 2, 'Jl. Pantai Amal, Tarakan', 'Tarakan', 3.2756, 117.6089, ARRAY['/images/green-garden-1.jpg'], '/images/green-garden-1.jpg', 3.7, 67, 350000, ARRAY['WiFi gratis', 'Taman', 'Restaurant', 'Playground'], false, 'active'),
+UPDATE public.hotels SET 
+    name = 'Green Garden Hotel',
+    description = 'Hotel ramah lingkungan dengan taman yang asri dan suasana tenang untuk liburan keluarga.',
+    star_rating = 2,
+    location = 'Jl. Pantai Amal, Tarakan',
+    city = 'Tarakan',
+    latitude = 3.2756,
+    longitude = 117.6089,
+    images = ARRAY['https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop',
+    rating = 3.7,
+    review_count = 67,
+    price_per_night = 350000,
+    amenities = ARRAY['WiFi gratis', 'Taman', 'Restaurant', 'Playground'],
+    is_featured = false,
+    status = 'active'
+WHERE slug = 'green-garden-hotel';
 
-('Malinau Riverfront Lodge', 'malinau-riverfront-lodge', 'Lodge eksklusif di tepi sungai dengan pemandangan alam yang spektakuler dan pengalaman eco-tourism.', 4, 'Jl. Sungai Malinau, Malinau', 'Malinau', 2.5833, 116.3833, ARRAY['/images/malinau-lodge-1.jpg'], '/images/malinau-lodge-1.jpg', 4.6, 23, 1200000, ARRAY['WiFi gratis', 'River view', 'Eco tour', 'Restaurant', 'Boat service'], true, 'active');
+UPDATE public.hotels SET 
+    name = 'Malinau Riverfront Lodge',
+    description = 'Lodge eksklusif di tepi sungai dengan pemandangan alam yang spektakuler dan pengalaman eco-tourism.',
+    star_rating = 4,
+    location = 'Jl. Sungai Malinau, Malinau',
+    city = 'Malinau',
+    latitude = 2.5833,
+    longitude = 116.3833,
+    images = ARRAY['https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop'],
+    featured_image = 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
+    rating = 4.6,
+    review_count = 23,
+    price_per_night = 1200000,
+    amenities = ARRAY['WiFi gratis', 'River view', 'Eco tour', 'Restaurant', 'Boat service'],
+    is_featured = true,
+    status = 'active'
+WHERE slug = 'malinau-riverfront-lodge';
 
 -- Insert sample bookings (using existing user IDs - you may need to adjust these)
 -- First, let's create some sample bookings with the admin user ID
@@ -97,6 +255,52 @@ BEGIN
 END $$;
 
 -- Update destination and hotel review counts and ratings
+UPDATE public.destinations SET 
+    review_count = (SELECT COUNT(*) FROM public.reviews WHERE destination_id = destinations.id AND status = 'approved'),
+    rating = (SELECT COALESCE(AVG(rating), 0) FROM public.reviews WHERE destination_id = destinations.id AND status = 'approved');
+
+UPDATE public.hotels SET 
+    review_count = (SELECT COUNT(*) FROM public.reviews WHERE hotel_id = hotels.id AND status = 'approved'),
+    rating = (SELECT COALESCE(AVG(rating), 0) FROM public.reviews WHERE hotel_id = hotels.id AND status = 'approved');
+
+-- ==============================================
+-- ALTERNATIVE: UPDATE QUERIES FOR EXISTING DATA
+-- ==============================================
+-- Use these queries if you want to update existing records instead of the complex DO blocks above
+
+-- Update sample bookings (if they already exist)
+-- Note: You'll need to replace the user_id, hotel_id, and destination_id with actual values from your database
+
+-- UPDATE public.bookings SET 
+--     check_in_date = CURRENT_DATE + INTERVAL '7 days',
+--     check_out_date = CURRENT_DATE + INTERVAL '9 days',
+--     guests = 2,
+--     rooms = 1,
+--     total_amount = 1700000,
+--     status = 'confirmed',
+--     payment_status = 'paid',
+--     contact_name = 'Admin',
+--     contact_email = 'admin@explorekaltara.com',
+--     contact_phone = '081234567890'
+-- WHERE booking_type = 'hotel' AND user_id = 'YOUR_USER_ID_HERE';
+
+-- Update sample reviews (if they already exist)
+-- UPDATE public.reviews SET 
+--     rating = 5,
+--     title = 'Pengalaman menginap yang luar biasa!',
+--     content = 'Hotel dengan fasilitas lengkap dan pelayanan yang sangat memuaskan. Staff ramah dan pemandangan laut sangat indah.',
+--     status = 'approved'
+-- WHERE review_type = 'hotel' AND user_id = 'YOUR_USER_ID_HERE';
+
+-- Update activity logs (if they already exist)
+-- UPDATE public.activity_logs SET 
+--     action = 'user_login',
+--     entity_type = 'auth',
+--     description = 'Admin user logged in',
+--     metadata = '{"ip": "127.0.0.1"}'
+-- WHERE user_id = 'YOUR_USER_ID_HERE' AND action = 'user_login';
+
+-- Manual update for review counts and ratings (these can be used as-is)
 UPDATE public.destinations SET 
     review_count = (SELECT COUNT(*) FROM public.reviews WHERE destination_id = destinations.id AND status = 'approved'),
     rating = (SELECT COALESCE(AVG(rating), 0) FROM public.reviews WHERE destination_id = destinations.id AND status = 'approved');

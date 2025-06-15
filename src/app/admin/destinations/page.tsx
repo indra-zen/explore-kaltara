@@ -64,7 +64,7 @@ export default function DestinationsPage() {
 
     // If user is admin, load data
     loadDestinations();
-  }, [isLoading, isAuthenticated, user]); // Removed router from dependencies
+  }, [isLoading, isAuthenticated, user, router]); // Added router to dependencies
   const isAdminUser = (email: string | null | undefined): boolean => {
     if (!email) return false;
     const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
@@ -364,7 +364,7 @@ export default function DestinationsPage() {
               <div key={destination.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="relative h-48">
                   <img
-                    src={destination.featured_image || destination.images?.[0] || '/images/placeholder.jpg'}
+                    src={destination.featured_image || destination.images?.[0] || 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop'}
                     alt={destination.name}
                     className="w-full h-full object-cover"
                   />

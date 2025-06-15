@@ -76,7 +76,7 @@ export default function SearchResultsContent() {
       {/* Search Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          Hasil Pencarian untuk "{query}"
+          Hasil Pencarian untuk &quot;{query}&quot;
         </h1>
         <p className="text-gray-600">
           Ditemukan {searchResults.length} hasil ({destinationResults.length} destinasi, {hotelResults.length} hotel)

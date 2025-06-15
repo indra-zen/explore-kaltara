@@ -608,7 +608,7 @@ export default function TripPlannerPage() {
                     <div className="text-center py-12 text-gray-500">
                       <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>Belum ada aktivitas untuk hari ini</p>
-                      <p className="text-sm">Klik "Tambah Aktivitas" untuk mulai merencanakan</p>
+                      <p className="text-sm">Klik &quot;Tambah Aktivitas&quot; untuk mulai merencanakan</p>
                     </div>
                   )}
                 </div>

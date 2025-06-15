@@ -84,7 +84,7 @@ export default function UsersPage() {
 
     // If user is admin, load data
     loadUsers();
-  }, [isLoading, isAuthenticated, user]); // Removed router from dependencies
+  }, [isLoading, isAuthenticated, user, router]); // Added router to dependencies
 
   const isAdminUser = (email: string | null | undefined): boolean => {
     if (!email) return false;

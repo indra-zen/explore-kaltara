@@ -98,7 +98,7 @@ export default function AdminDashboard() {
 
     // Load dashboard data for admin users
     loadDashboardData();
-  }, [isLoading, isAuthenticated, user]); // Removed router from dependencies
+  }, [isLoading, isAuthenticated, user, router]); // Added router to dependencies
 
   const isAdminUser = (email: string | null | undefined): boolean => {
     if (!email) return false;
@@ -262,9 +262,8 @@ export default function AdminDashboard() {
       <div className="space-y-8">
         {/* Header */}
         <div className="border-b border-gray-200 pb-4">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">
-            Welcome back, {user.name}. Here's what's happening with your tourism platform.
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>          <p className="text-gray-600 mt-2">
+            Welcome back, {user.name}. Here&apos;s what&apos;s happening with your tourism platform.
           </p>
         </div>
 

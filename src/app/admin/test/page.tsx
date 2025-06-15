@@ -47,7 +47,7 @@ export default function AdminTestPage() {
     }
 
     console.log('AdminTestPage: User is authenticated admin, staying on page');
-  }, [isLoading, isAuthenticated, user, router]);
+  }, [isLoading, isAuthenticated, user, router, authChecked]);
 
   // Show loading while auth is being determined
   if (isLoading || !authChecked) {
@@ -88,9 +88,8 @@ export default function AdminTestPage() {
           <h2 className="text-xl font-semibold mb-4">Test Results</h2>
           <p className="text-green-600">
             ✅ If you can see this page, the authentication logic is working correctly!
-          </p>
-          <p className="text-gray-600 mt-2">
-            The page should not redirect to the homepage on refresh if you're properly authenticated as an admin.
+          </p>          <p className="text-gray-600 mt-2">
+            The page should not redirect to the homepage on refresh if you&apos;re properly authenticated as an admin.
           </p>
           
           <div className="mt-6 space-x-4">

@@ -140,7 +140,7 @@ function BookingContent() {
     } catch (error) {
       console.error('Error loading draft:', error);
     }
-  }, [searchParams]);
+  }, [searchParams, bookingForm, paymentForm]);
 
   // Auto-save draft - with SSR safety
   useEffect(() => {

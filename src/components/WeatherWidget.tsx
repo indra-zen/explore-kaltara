@@ -24,89 +24,89 @@ interface WeatherWidgetProps {
   showForecast?: boolean;
 }
 
+// Mock weather data for Kaltara locations
+const mockWeatherData: Record<string, WeatherData> = {
+  'Tarakan': {
+    location: 'Tarakan',
+    temperature: 29,
+    description: 'Cerah berawan',
+    humidity: 78,
+    windSpeed: 12,
+    visibility: 10,
+    condition: 'cloudy' as const,
+    forecast: [
+      { day: 'Besok', temp: 30, condition: 'Cerah' },
+      { day: 'Lusa', temp: 28, condition: 'Hujan ringan' },
+      { day: 'Senin', temp: 31, condition: 'Cerah' },
+      { day: 'Selasa', temp: 29, condition: 'Berawan' },
+    ]
+  },
+  'Nunukan': {
+    location: 'Nunukan',
+    temperature: 28,
+    description: 'Hujan ringan',
+    humidity: 85,
+    windSpeed: 15,
+    visibility: 8,
+    condition: 'rainy' as const,
+    forecast: [
+      { day: 'Besok', temp: 29, condition: 'Berawan' },
+      { day: 'Lusa', temp: 27, condition: 'Hujan' },
+      { day: 'Senin', temp: 30, condition: 'Cerah' },
+      { day: 'Selasa', temp: 28, condition: 'Cerah berawan' },
+    ]
+  },
+  'Malinau': {
+    location: 'Malinau',
+    temperature: 26,
+    description: 'Berawan',
+    humidity: 80,
+    windSpeed: 8,
+    visibility: 12,
+    condition: 'overcast' as const,
+    forecast: [
+      { day: 'Besok', temp: 27, condition: 'Cerah berawan' },
+      { day: 'Lusa', temp: 25, condition: 'Hujan ringan' },
+      { day: 'Senin', temp: 29, condition: 'Cerah' },
+      { day: 'Selasa', temp: 26, condition: 'Hujan ringan' },
+    ]
+  },
+  'Bulungan': {
+    location: 'Bulungan',
+    temperature: 30,
+    description: 'Cerah',
+    humidity: 70,
+    windSpeed: 10,
+    visibility: 15,
+    condition: 'sunny' as const,
+    forecast: [
+      { day: 'Besok', temp: 31, condition: 'Cerah' },
+      { day: 'Lusa', temp: 30, condition: 'Cerah berawan' },
+      { day: 'Senin', temp: 29, condition: 'Berawan' },
+      { day: 'Selasa', temp: 28, condition: 'Hujan ringan' },
+    ]
+  },
+  'Tana Tidung': {
+    location: 'Tana Tidung',
+    temperature: 27,
+    description: 'Cerah berawan',
+    humidity: 75,
+    windSpeed: 9,
+    visibility: 11,
+    condition: 'cloudy' as const,
+    forecast: [
+      { day: 'Besok', temp: 28, condition: 'Cerah' },
+      { day: 'Lusa', temp: 27, condition: 'Berawan' },
+      { day: 'Senin', temp: 29, condition: 'Cerah berawan' },
+      { day: 'Selasa', temp: 26, condition: 'Hujan' },
+    ]
+  }
+};
+
 export default function WeatherWidget({ location, className = '', showForecast = false }: WeatherWidgetProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Mock weather data for Kaltara locations
-  const mockWeatherData: Record<string, WeatherData> = {
-    'Tarakan': {
-      location: 'Tarakan',
-      temperature: 29,
-      description: 'Cerah berawan',
-      humidity: 78,
-      windSpeed: 12,
-      visibility: 10,
-      condition: 'cloudy',
-      forecast: [
-        { day: 'Besok', temp: 30, condition: 'Cerah' },
-        { day: 'Lusa', temp: 28, condition: 'Hujan ringan' },
-        { day: 'Senin', temp: 31, condition: 'Cerah' },
-        { day: 'Selasa', temp: 29, condition: 'Berawan' },
-      ]
-    },
-    'Nunukan': {
-      location: 'Nunukan',
-      temperature: 28,
-      description: 'Hujan ringan',
-      humidity: 85,
-      windSpeed: 8,
-      visibility: 8,
-      condition: 'rainy',
-      forecast: [
-        { day: 'Besok', temp: 27, condition: 'Hujan' },
-        { day: 'Lusa', temp: 29, condition: 'Berawan' },
-        { day: 'Senin', temp: 30, condition: 'Cerah' },
-        { day: 'Selasa', temp: 28, condition: 'Hujan ringan' },
-      ]
-    },
-    'Malinau': {
-      location: 'Malinau',
-      temperature: 26,
-      description: 'Berawan',
-      humidity: 82,
-      windSpeed: 6,
-      visibility: 12,
-      condition: 'overcast',
-      forecast: [
-        { day: 'Besok', temp: 27, condition: 'Berawan' },
-        { day: 'Lusa', temp: 28, condition: 'Cerah berawan' },
-        { day: 'Senin', temp: 29, condition: 'Cerah' },
-        { day: 'Selasa', temp: 26, condition: 'Hujan ringan' },
-      ]
-    },
-    'Bulungan': {
-      location: 'Bulungan',
-      temperature: 30,
-      description: 'Cerah',
-      humidity: 70,
-      windSpeed: 10,
-      visibility: 15,
-      condition: 'sunny',
-      forecast: [
-        { day: 'Besok', temp: 31, condition: 'Cerah' },
-        { day: 'Lusa', temp: 30, condition: 'Cerah berawan' },
-        { day: 'Senin', temp: 29, condition: 'Berawan' },
-        { day: 'Selasa', temp: 28, condition: 'Hujan ringan' },
-      ]
-    },
-    'Tana Tidung': {
-      location: 'Tana Tidung',
-      temperature: 27,
-      description: 'Cerah berawan',
-      humidity: 75,
-      windSpeed: 9,
-      visibility: 11,
-      condition: 'cloudy',
-      forecast: [
-        { day: 'Besok', temp: 28, condition: 'Cerah' },
-        { day: 'Lusa', temp: 27, condition: 'Berawan' },
-        { day: 'Senin', temp: 29, condition: 'Cerah berawan' },
-        { day: 'Selasa', temp: 26, condition: 'Hujan' },
-      ]
-    }
-  };
 
   useEffect(() => {
     const fetchWeather = async () => {

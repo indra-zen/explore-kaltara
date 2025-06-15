@@ -168,7 +168,7 @@ export default function GlobalSearch() {
                 onClick={handleResultClick}
                 className="block w-full text-center py-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
-                Lihat semua hasil untuk "{query}"
+                Lihat semua hasil untuk &quot;{query}&quot;
               </Link>
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function GlobalSearch() {
         <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
           <div className="p-4 text-center text-gray-500">
             <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">Tidak ada hasil untuk "{query}"</p>
+            <p className="text-sm">Tidak ada hasil untuk &quot;{query}&quot;</p>
           </div>
         </div>
       )}

@@ -68,7 +68,7 @@ export default function HotelsPage() {
 
     // If user is admin, load data
     loadHotels();
-  }, [isLoading, isAuthenticated, user]); // Removed router from dependencies
+  }, [isLoading, isAuthenticated, user, router]); // Added router to dependencies
 
   const isAdminUser = (email: string | null | undefined): boolean => {
     if (!email) return false;
@@ -383,7 +383,7 @@ export default function HotelsPage() {
               <div key={hotel.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="relative h-48">
                   <img
-                    src={hotel.featured_image || hotel.images?.[0] || '/images/placeholder.jpg'}
+                    src={hotel.featured_image || hotel.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop'}
                     alt={hotel.name}
                     className="w-full h-full object-cover"
                   />
