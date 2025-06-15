@@ -99,13 +99,13 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 -- Activity logs table for admin dashboard
 CREATE TABLE IF NOT EXISTS public.activity_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   action TEXT NOT NULL,
   entity_type TEXT NOT NULL,
-  entity_id TEXT,
+  entity_id UUID,
   description TEXT NOT NULL,
   metadata JSONB DEFAULT '{}',
-  ip_address INET,
+  ip_address TEXT,
   user_agent TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );

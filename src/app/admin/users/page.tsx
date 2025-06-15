@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminService from '@/lib/supabase/admin-service';
+import { UserModal, ConfirmDialog, Toast } from '@/components/admin/AdminModals';
 import { 
   Search,
   Filter,
@@ -29,22 +30,34 @@ interface User {
   favorite_locations?: string[];
   interests?: string[];
   travel_style?: 'budget' | 'mid-range' | 'luxury';
+  is_admin?: boolean;
 }
 
 export default function UsersPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();  const [users, setUsers] = useState<User[]>([]);
+  const router = useRouter();
+  
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'user' | 'admin' | 'moderator'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
+  
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
     totalPages: 1,
     totalCount: 0
   });
+
+  // CRUD operation states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'warning' } | null>(null);
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !user)) {
@@ -63,7 +76,9 @@ export default function UsersPage() {
   const isAdminUser = (email: string) => {
     const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
     return adminEmails.includes(email);
-  };  const loadUsers = async () => {
+  };
+
+  const loadUsers = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -71,15 +86,14 @@ export default function UsersPage() {
       setUsers(result.data || []);
     } catch (err) {
       console.error('Error fetching users:', err);
-      // Only set error for actual connection/auth errors, not empty data
       const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
       if (errorMessage.includes('auth') || errorMessage.includes('connection') || errorMessage.includes('network')) {
         setError('Failed to load users. Please check your connection and try again.');
       } else {
-        // For other errors, still show the UI but with empty data
         setError(null);
       }
-      setUsers([]);    } finally {
+      setUsers([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -87,8 +101,10 @@ export default function UsersPage() {
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    // Since real user data doesn't have role/status, we'll just filter by search for now
-    return matchesSearch;
+    const matchesRole = filterRole === 'all' || 
+                       (filterRole === 'admin' && user.is_admin) ||
+                       (filterRole === 'user' && !user.is_admin);
+    return matchesSearch && matchesRole;
   });
 
   const handleSelectUser = (userId: string) => {
@@ -107,32 +123,87 @@ export default function UsersPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: 'bg-green-100 text-green-800',
-      inactive: 'bg-gray-100 text-gray-800',
-      pending: 'bg-yellow-100 text-yellow-800'
-    };
-    
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusConfig[status as keyof typeof statusConfig]}`}>
-        {status}
-      </span>
-    );
+  const handleCreateUser = () => {
+    setCurrentUser(null);
+    setShowUserModal(true);
   };
 
-  const getRoleBadge = (role: string) => {
-    const roleConfig = {
-      admin: 'bg-red-100 text-red-800',
-      moderator: 'bg-blue-100 text-blue-800',
-      user: 'bg-gray-100 text-gray-800'
-    };
+  const handleEditUser = (user: User) => {
+    setCurrentUser(user);
+    setShowUserModal(true);
+  };
+
+  const handleDeleteUser = (user: User) => {
+    setCurrentUser(user);
+    setShowDeleteDialog(true);
+  };
+
+  const handleSaveUser = async (userData: any) => {
+    try {
+      setActionLoading(true);
+      
+      if (currentUser) {
+        // Update existing user
+        const updatedUser = await AdminService.updateUserProfile(currentUser.id, userData);
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, ...updatedUser } : u));
+        setToast({ message: 'User updated successfully!', variant: 'success' });
+      } else {
+        // Create new user
+        const newUser = await AdminService.createUser(userData);
+        setUsers(prev => [...prev, newUser]);
+        setToast({ message: 'User created successfully!', variant: 'success' });
+      }
+      
+      setShowUserModal(false);
+      setCurrentUser(null);
+    } catch (error) {
+      console.error('Error saving user:', error);
+      setToast({ 
+        message: error instanceof Error ? error.message : 'Failed to save user', 
+        variant: 'error' 
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!currentUser) return;
     
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${roleConfig[role as keyof typeof roleConfig]}`}>
-        {role}
-      </span>
-    );
+    try {
+      setActionLoading(true);
+      await AdminService.deleteUser(currentUser.id);
+      setUsers(prev => prev.filter(u => u.id !== currentUser.id));
+      setToast({ message: 'User deleted successfully!', variant: 'success' });
+      setShowDeleteDialog(false);
+      setCurrentUser(null);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setToast({ 
+        message: error instanceof Error ? error.message : 'Failed to delete user', 
+        variant: 'error' 
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      setActionLoading(true);
+      await Promise.all(selectedUsers.map(id => AdminService.deleteUser(id)));
+      setUsers(prev => prev.filter(u => !selectedUsers.includes(u.id)));
+      setSelectedUsers([]);
+      setToast({ message: `${selectedUsers.length} users deleted successfully!`, variant: 'success' });
+    } catch (error) {
+      console.error('Error bulk deleting users:', error);
+      setToast({ 
+        message: error instanceof Error ? error.message : 'Failed to delete users', 
+        variant: 'error' 
+      });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -164,12 +235,28 @@ export default function UsersPage() {
               <Download className="w-4 h-4 mr-2" />
               Export
             </button>
-            <button className="flex items-center px-4 py-2 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+            <button 
+              onClick={handleCreateUser}
+              className="flex items-center px-4 py-2 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+            >
               <UserPlus className="w-4 h-4 mr-2" />
               Add User
             </button>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600">{error}</p>
+            <button 
+              onClick={loadUsers}
+              className="mt-2 text-red-700 hover:text-red-800 font-medium"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -194,18 +281,7 @@ export default function UsersPage() {
               >
                 <option value="all">All Roles</option>
                 <option value="user">User</option>
-                <option value="moderator">Moderator</option>
                 <option value="admin">Admin</option>
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="pending">Pending</option>
               </select>
             </div>
           </div>
@@ -223,7 +299,10 @@ export default function UsersPage() {
                   <span className="text-sm text-gray-600">
                     {selectedUsers.length} selected
                   </span>
-                  <button className="text-red-600 hover:text-red-700 text-sm font-medium">
+                  <button 
+                    onClick={handleBulkDelete}
+                    className="text-red-600 hover:text-red-700 text-sm font-medium"
+                  >
                     Delete Selected
                   </button>
                 </div>
@@ -231,98 +310,159 @@ export default function UsersPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                    />
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Join Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Activity
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading users...</p>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500">
+                {searchTerm ? 'No users found matching your search.' : 'No users found.'}
+              </p>
+              {!searchTerm && (
+                <button 
+                  onClick={handleCreateUser}
+                  className="mt-4 text-emerald-600 hover:text-emerald-700 font-medium"
+                >
+                  Create your first user
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left">
                       <input
                         type="checkbox"
-                        checked={selectedUsers.includes(user.id)}
-                        onChange={() => handleSelectUser(user.id)}
+                        checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                        onChange={handleSelectAll}
                         className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                       />
-                    </td>                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                          <span className="text-emerald-600 font-medium">
-                            {user.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {user.email.includes('admin') ? 'Admin' : 'User'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      <div>Travel Style: {user.travel_style || 'Not specified'}</div>
-                      <div>Interests: {user.interests?.length || 0}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <button className="text-emerald-600 hover:text-emerald-700">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="text-blue-600 hover:text-blue-700">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button className="text-red-600 hover:text-red-700">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Join Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Details
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredUsers.map((userItem) => (
+                    <tr key={userItem.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedUsers.includes(userItem.id)}
+                          onChange={() => handleSelectUser(userItem.id)}
+                          className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                            {userItem.avatar_url ? (
+                              <img src={userItem.avatar_url} alt={userItem.name} className="w-10 h-10 rounded-full" />
+                            ) : (
+                              <span className="text-emerald-600 font-medium">
+                                {userItem.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{userItem.name}</div>
+                            <div className="text-sm text-gray-500">{userItem.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          userItem.is_admin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {userItem.is_admin ? 'Admin' : 'User'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {new Date(userItem.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        <div>Travel Style: {userItem.travel_style || 'Not specified'}</div>
+                        <div>Interests: {userItem.interests?.length || 0}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            onClick={() => handleEditUser(userItem)}
+                            className="text-blue-600 hover:text-blue-700"
+                            title="Edit User"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteUser(userItem)}
+                            className="text-red-600 hover:text-red-700"
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Modals */}
+      <UserModal
+        isOpen={showUserModal}
+        user={currentUser}
+        onSave={handleSaveUser}
+        onCancel={() => {
+          setShowUserModal(false);
+          setCurrentUser(null);
+        }}
+        loading={actionLoading}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        title="Delete User"
+        message={`Are you sure you want to delete "${currentUser?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        onConfirm={confirmDeleteUser}
+        onCancel={() => {
+          setShowDeleteDialog(false);
+          setCurrentUser(null);
+        }}
+        loading={actionLoading}
+        variant="danger"
+      />
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          variant={toast.variant}
+          isVisible={!!toast}
+          onClose={() => setToast(null)}
+        />
+      )}
     </AdminLayout>
   );
 }

@@ -351,8 +351,7 @@ export interface Database {
             referencedRelation: "hotels"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "reviews_destination_id_fkey"
+          {            foreignKeyName: "reviews_destination_id_fkey"
             columns: ["destination_id"]
             referencedRelation: "destinations"
             referencedColumns: ["id"]

@@ -392,23 +392,44 @@ export class AdminService {
   // ==========================
   // DESTINATIONS CRUD OPERATIONS
   // ==========================
-
   static async createDestination(destinationData: {
     name: string;
-    slug: string;
-    description: string;
+    slug?: string;
+    description?: string;
+    category: 'nature' | 'culture' | 'history' | 'entertainment' | 'adventure';
     location: string;
-    price_range: string;
-    category: string;
-    image_url?: string;
-    gallery?: string[];
-    features?: string[];
-    coordinates?: { lat: number; lng: number };
+    city: string;
+    latitude?: number;
+    longitude?: number;
+    images?: string[];
+    featured_image?: string;
+    rating?: number;
+    price_range: 'free' | 'budget' | 'mid-range' | 'expensive';
+    facilities?: string[];
+    opening_hours?: any;
+    contact_info?: any;
+    is_featured?: boolean;
+    status?: 'active' | 'inactive' | 'pending';
   }) {
     try {
+      // Generate slug if not provided
+      const slug = destinationData.slug || destinationData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      const dataToInsert = {
+        ...destinationData,
+        slug,
+        description: destinationData.description || '',
+        rating: destinationData.rating || 0,
+        review_count: 0,
+        images: destinationData.images || [],
+        facilities: destinationData.facilities || [],
+        is_featured: destinationData.is_featured || false,
+        status: destinationData.status || 'active'
+      };
+
       const { data, error } = await supabase
         .from('destinations')
-        .insert([destinationData])
+        .insert([dataToInsert])
         .select()
         .single();
 
@@ -428,18 +449,25 @@ export class AdminService {
       throw error;
     }
   }
-
   static async updateDestination(id: string, destinationData: Partial<{
     name: string;
     slug: string;
     description: string;
+    category: 'nature' | 'culture' | 'history' | 'entertainment' | 'adventure';
     location: string;
-    price_range: string;
-    category: string;
-    image_url: string;
-    gallery: string[];
-    features: string[];
-    coordinates: { lat: number; lng: number };
+    city: string;
+    latitude: number;
+    longitude: number;
+    images: string[];
+    featured_image: string;
+    rating: number;
+    review_count: number;
+    price_range: 'free' | 'budget' | 'mid-range' | 'expensive';
+    facilities: string[];
+    opening_hours: any;
+    contact_info: any;
+    is_featured: boolean;
+    status: 'active' | 'inactive' | 'pending';
   }>) {
     try {
       const { data, error } = await supabase
@@ -495,24 +523,47 @@ export class AdminService {
   // ==========================
   // HOTELS CRUD OPERATIONS
   // ==========================
-
   static async createHotel(hotelData: {
     name: string;
-    slug: string;
-    description: string;
+    slug?: string;
+    description?: string;
+    star_rating?: number;
     location: string;
-    price_per_night: number;
-    rating: number;
-    amenities: string[];
-    image_url?: string;
-    gallery?: string[];
+    city: string;
+    latitude?: number;
+    longitude?: number;
+    images?: string[];
+    featured_image?: string;
+    rating?: number;
+    price_per_night?: number;
+    currency?: string;
+    amenities?: string[];
+    room_types?: any;
     contact_info?: any;
     policies?: any;
+    is_featured?: boolean;
+    status?: 'active' | 'inactive' | 'pending';
   }) {
     try {
+      // Generate slug if not provided
+      const slug = hotelData.slug || hotelData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      const dataToInsert = {
+        ...hotelData,
+        slug,
+        star_rating: hotelData.star_rating || 3,
+        rating: hotelData.rating || 0,
+        review_count: 0,
+        currency: hotelData.currency || 'USD',
+        amenities: hotelData.amenities || [],
+        room_types: hotelData.room_types || [],
+        is_featured: hotelData.is_featured || false,
+        status: hotelData.status || 'active'
+      };
+
       const { data, error } = await supabase
         .from('hotels')
-        .insert([hotelData])
+        .insert([dataToInsert])
         .select()
         .single();
 
@@ -532,19 +583,27 @@ export class AdminService {
       throw error;
     }
   }
-
   static async updateHotel(id: string, hotelData: Partial<{
     name: string;
     slug: string;
     description: string;
+    star_rating: number;
     location: string;
-    price_per_night: number;
+    city: string;
+    latitude: number;
+    longitude: number;
+    images: string[];
+    featured_image: string;
     rating: number;
+    review_count: number;
+    price_per_night: number;
+    currency: string;
     amenities: string[];
-    image_url: string;
-    gallery: string[];
+    room_types: any;
     contact_info: any;
     policies: any;
+    is_featured: boolean;
+    status: 'active' | 'inactive' | 'pending';
   }>) {
     try {
       const { data, error } = await supabase
@@ -740,10 +799,61 @@ export class AdminService {
       throw error;
     }
   }
-
   // ==========================
   // USER MANAGEMENT OPERATIONS
   // ==========================
+
+  static async createUser(userData: {
+    email: string;
+    password: string;
+    name: string;
+    avatar_url?: string;
+    favorite_locations?: string[];
+    interests?: string[];
+    travel_style?: 'budget' | 'mid-range' | 'luxury';
+    is_admin?: boolean;
+  }) {
+    try {
+      // Create auth user first
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: userData.email,
+        password: userData.password,
+        email_confirm: true
+      });
+
+      if (authError) throw authError;
+
+      // Create profile
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          name: userData.name,
+          avatar_url: userData.avatar_url,
+          favorite_locations: userData.favorite_locations || [],
+          interests: userData.interests || [],
+          travel_style: userData.travel_style || 'mid-range',
+          is_admin: userData.is_admin || false
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'create',
+        'user',
+        authData.user.id,
+        `Created new user: ${userData.name}`,
+        { user_data: userData }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
 
   static async updateUserProfile(id: string, profileData: Partial<{
     name: string;
@@ -881,9 +991,7 @@ export class AdminService {
       console.error('Error bulk approving reviews:', error);
       throw error;
     }
-  }
-
-  // Log admin activity
+  }  // Log admin activity
   static async logActivity(
     action: string,
     entityType: string,
@@ -894,21 +1002,43 @@ export class AdminService {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) return;
+      if (!user) {
+        console.warn('No authenticated user found for activity logging');
+        return;
+      }
+
+      // Prepare the log data - handle both TEXT and UUID entity_id types
+      const logData = {
+        user_id: user.id,
+        action,
+        entity_type: entityType,
+        entity_id: entityId, // This will work for both TEXT and UUID columns
+        description,
+        metadata: metadata || {}
+      };
+
+      console.log('Attempting to log activity:', logData);
 
       const { error } = await supabase
         .from('activity_logs')
-        .insert({
-          user_id: user.id,
-          action,
-          entity_type: entityType,
-          entity_id: entityId,
-          description,
-          metadata
-        });
+        .insert(logData);
 
-      if (error) throw error;    } catch (error) {
+      if (error) {
+        console.error('Database error in logActivity:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        // Don't throw - just log the error so the main operation continues
+        return;
+      }
+
+      console.log('Activity logged successfully');
+    } catch (error) {
       console.error('Error logging activity:', error);
+      // Don't throw the error to prevent it from breaking the main operation
     }
   }
 }

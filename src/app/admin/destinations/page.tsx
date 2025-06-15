@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminService from '@/lib/supabase/admin-service';
+import { DestinationModal, ConfirmDialog, Toast } from '@/components/admin/AdminModals';
 import { 
   Search,
   Filter,
@@ -27,9 +28,17 @@ export default function DestinationsPage() {
   const router = useRouter();
   const [destinationList, setDestinationList] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
+
+  // CRUD states
+  const [showDestinationModal, setShowDestinationModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [currentDestination, setCurrentDestination] = useState<Destination | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'warning' } | null>(null);
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !user)) {
@@ -50,14 +59,22 @@ export default function DestinationsPage() {
   const isAdminUser = (email: string) => {
     const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
     return adminEmails.includes(email);
-  };  const loadDestinations = async () => {
+  };
+
+  const loadDestinations = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await AdminService.getDestinations();
       setDestinationList(response.data || []);
-    } catch (error) {
-      console.error('Error loading destinations:', error);
-      // For destinations, we don't need to show error state, just empty list
+    } catch (err) {
+      console.error('Error loading destinations:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load destinations';
+      if (errorMessage.includes('auth') || errorMessage.includes('connection') || errorMessage.includes('network')) {
+        setError('Failed to load destinations. Please check your connection and try again.');
+      } else {
+        setError(null);
+      }
       setDestinationList([]);
     } finally {
       setLoading(false);
@@ -75,6 +92,71 @@ export default function DestinationsPage() {
 
   const categories = [...new Set(destinationList.map((d: Destination) => d.category).filter(Boolean))];
   const locations = [...new Set(destinationList.map((d: Destination) => d.location).filter(Boolean))];
+
+  const handleCreateDestination = () => {
+    setCurrentDestination(null);
+    setShowDestinationModal(true);
+  };
+
+  const handleEditDestination = (destination: Destination) => {
+    setCurrentDestination(destination);
+    setShowDestinationModal(true);
+  };
+
+  const handleDeleteDestination = (destination: Destination) => {
+    setCurrentDestination(destination);
+    setShowDeleteDialog(true);
+  };
+
+  const handleSaveDestination = async (destinationData: any) => {
+    try {
+      setActionLoading(true);
+      
+      if (currentDestination) {
+        // Update existing destination
+        const updatedDestination = await AdminService.updateDestination(currentDestination.id, destinationData);
+        setDestinationList(prev => prev.map(d => d.id === currentDestination.id ? { ...d, ...updatedDestination } : d));
+        setToast({ message: 'Destination updated successfully!', variant: 'success' });
+      } else {
+        // Create new destination
+        const newDestination = await AdminService.createDestination(destinationData);
+        setDestinationList(prev => [...prev, newDestination]);
+        setToast({ message: 'Destination created successfully!', variant: 'success' });
+      }
+      
+      setShowDestinationModal(false);
+      setCurrentDestination(null);
+    } catch (error) {
+      console.error('Error saving destination:', error);
+      setToast({ 
+        message: error instanceof Error ? error.message : 'Failed to save destination', 
+        variant: 'error' 
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmDeleteDestination = async () => {
+    if (!currentDestination) return;
+    
+    try {
+      setActionLoading(true);
+      await AdminService.deleteDestination(currentDestination.id);
+      setDestinationList(prev => prev.filter(d => d.id !== currentDestination.id));
+      setToast({ message: 'Destination deleted successfully!', variant: 'success' });
+      setShowDeleteDialog(false);
+      setCurrentDestination(null);
+    } catch (error) {
+      console.error('Error deleting destination:', error);
+      setToast({ 
+        message: error instanceof Error ? error.message : 'Failed to delete destination', 
+        variant: 'error' 
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const getCategoryBadge = (category: string | null) => {
     if (!category) return null;
@@ -124,12 +206,28 @@ export default function DestinationsPage() {
               <Download className="w-4 h-4 mr-2" />
               Export
             </button>
-            <button className="flex items-center px-4 py-2 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+            <button 
+              onClick={handleCreateDestination}
+              className="flex items-center px-4 py-2 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Destination
             </button>
           </div>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600">{error}</p>
+            <button 
+              onClick={loadDestinations}
+              className="mt-2 text-red-700 hover:text-red-800 font-medium"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -144,7 +242,8 @@ export default function DestinationsPage() {
               </div>
             </div>
           </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Star className="w-6 h-6 text-blue-600" />
@@ -167,10 +266,8 @@ export default function DestinationsPage() {
                 <Image className="w-6 h-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Images</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {destinationList.reduce((sum, d) => sum + (d.images?.length || 0), 0)}
-                </p>
+                <p className="text-sm font-medium text-gray-600">Categories</p>
+                <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
               </div>
             </div>
           </div>
@@ -209,7 +306,8 @@ export default function DestinationsPage() {
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               >
-                <option value="all">All Categories</option>                {categories.map(category => (
+                <option value="all">All Categories</option>
+                {categories.map(category => (
                   <option key={category} value={category || ''}>{category}</option>
                 ))}
               </select>
@@ -228,72 +326,125 @@ export default function DestinationsPage() {
         </div>
 
         {/* Destinations Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDestinations.map((destination) => (
-            <div key={destination.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative h-48">                <img
-                  src={destination.featured_image || destination.images?.[0] || '/images/placeholder.jpg'}
-                  alt={destination.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 right-2">
-                  <button className="p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow">
-                    <MoreVertical className="w-4 h-4 text-gray-600" />
-                  </button>
-                </div>
-                <div className="absolute bottom-2 left-2">
-                  {getCategoryBadge(destination.category)}
-                </div>
-              </div>
-              
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                    {destination.name}
-                  </h3>
-                  <div className="flex items-center space-x-1 text-yellow-500">
-                    <Star className="w-4 h-4 fill-current" />
-                    <span className="text-sm font-medium text-gray-900">{destination.rating}</span>
-                  </div>
-                </div>
-                
-                <p className="text-sm text-gray-600 mb-2 flex items-center">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {destination.location}
-                </p>
-                
-                <p className="text-sm text-gray-700 line-clamp-2 mb-4">
-                  {destination.description}
-                </p>
-                
-                <div className="flex items-center justify-between">                  <span className="text-sm font-medium text-emerald-600">
-                    {destination.price_range || 'Free'}
-                  </span>
-                  <div className="flex space-x-1">
-                    <button className="p-2 text-gray-400 hover:text-emerald-600 transition-colors">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredDestinations.length === 0 && (
+        {loading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading destinations...</p>
+          </div>
+        ) : filteredDestinations.length === 0 ? (
           <div className="text-center py-12">
             <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No destinations found</h3>
-            <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
+            <p className="text-gray-600 mb-4">
+              {searchTerm ? 'Try adjusting your search or filter criteria.' : 'Get started by creating your first destination.'}
+            </p>
+            {!searchTerm && (
+              <button 
+                onClick={handleCreateDestination}
+                className="text-emerald-600 hover:text-emerald-700 font-medium"
+              >
+                Create your first destination
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredDestinations.map((destination) => (
+              <div key={destination.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                <div className="relative h-48">
+                  <img
+                    src={destination.featured_image || destination.images?.[0] || '/images/placeholder.jpg'}
+                    alt={destination.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-2 left-2">
+                    {getCategoryBadge(destination.category)}
+                  </div>
+                </div>
+                
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+                      {destination.name}
+                    </h3>
+                    <div className="flex items-center space-x-1 text-yellow-500">
+                      <Star className="w-4 h-4 fill-current" />
+                      <span className="text-sm font-medium text-gray-900">{destination.rating || 0}</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-2 flex items-center">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {destination.location}
+                  </p>
+                  
+                  <p className="text-sm text-gray-700 line-clamp-2 mb-4">
+                    {destination.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-emerald-600">
+                      {destination.price_range || 'Free'}
+                    </span>
+                    <div className="flex space-x-1">
+                      <button 
+                        onClick={() => handleEditDestination(destination)}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Edit Destination"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteDestination(destination)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                        title="Delete Destination"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <DestinationModal
+        isOpen={showDestinationModal}
+        destination={currentDestination}
+        onSave={handleSaveDestination}
+        onCancel={() => {
+          setShowDestinationModal(false);
+          setCurrentDestination(null);
+        }}
+        loading={actionLoading}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        title="Delete Destination"
+        message={`Are you sure you want to delete "${currentDestination?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        onConfirm={confirmDeleteDestination}
+        onCancel={() => {
+          setShowDeleteDialog(false);
+          setCurrentDestination(null);
+        }}
+        loading={actionLoading}
+        variant="danger"
+      />
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          variant={toast.variant}
+          isVisible={!!toast}
+          onClose={() => setToast(null)}
+        />
+      )}
     </AdminLayout>
   );
 }
