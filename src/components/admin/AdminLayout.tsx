@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
@@ -35,11 +35,27 @@ const navigation = [
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
-
   const handleLogout = async () => {
-    await logout();
+    if (loggingOut) return; // Prevent double clicks
+    
+    try {
+      console.log('Admin logout initiated...');
+      setLoggingOut(true);
+      await logout();
+      console.log('Logout completed, redirecting...');
+      // Explicitly redirect to home page after logout
+      router.push('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still redirect even if there's an error
+      router.push('/');
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -113,13 +129,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 {user?.email}
               </p>
             </div>
-          </div>
-          <button
+          </div>          <button
             onClick={handleLogout}
-            className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={loggingOut}
+            className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Logout
+            {loggingOut ? 'Logging out...' : 'Logout'}
           </button>
         </div>
       </div>

@@ -118,6 +118,21 @@ function BookingContent() {
     }
 
     setBookingItem(item);
+    
+    // Populate form with URL parameters
+    const checkIn = searchParams.get('checkIn');
+    const checkOut = searchParams.get('checkOut');
+    const guests = searchParams.get('guests');
+    
+    if (checkIn || checkOut || guests) {
+      setBookingForm(prev => ({
+        ...prev,
+        checkIn: checkIn || prev.checkIn,
+        checkOut: checkOut || prev.checkOut,
+        guests: guests ? parseInt(guests) : prev.guests
+      }));
+    }
+    
     setIsLoading(false);
   }, [searchParams, router]);
 
@@ -128,19 +143,26 @@ function BookingContent() {
     const itemId = searchParams.get('item');
     const draftKey = `booking-draft-${itemId}`;
     
+    // Check if we have URL parameters for the form
+    const checkInParam = searchParams.get('checkIn');
+    const checkOutParam = searchParams.get('checkOut');
+    const guestsParam = searchParams.get('guests');
+    const hasUrlParams = checkInParam || checkOutParam || guestsParam;
+    
     try {
       const savedDraft = localStorage.getItem(draftKey);
       
-      if (savedDraft) {
+      if (savedDraft && !hasUrlParams) {
+        // Only load draft if we don't have URL parameters
         const draft = JSON.parse(savedDraft);
-        setBookingForm(draft.bookingForm || bookingForm);
-        setPaymentForm(draft.paymentForm || paymentForm);
+        setBookingForm(prev => ({...prev, ...draft.bookingForm}));
+        setPaymentForm(prev => ({...prev, ...draft.paymentForm}));
         setCurrentStep(draft.currentStep || 1);
       }
     } catch (error) {
       console.error('Error loading draft:', error);
     }
-  }, [searchParams, bookingForm, paymentForm]);
+  }, [searchParams]);
 
   // Auto-save draft - with SSR safety
   useEffect(() => {
@@ -481,7 +503,7 @@ function BookingContent() {
                       value={bookingForm.checkIn}
                       min={new Date().toISOString().split('T')[0]}
                       onChange={(e) => handleBookingFormChange('checkIn', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                     />
                   </div>
                   
@@ -495,7 +517,7 @@ function BookingContent() {
                       value={bookingForm.checkOut}
                       min={bookingForm.checkIn || new Date().toISOString().split('T')[0]}
                       onChange={(e) => handleBookingFormChange('checkOut', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                     />
                   </div>
                   

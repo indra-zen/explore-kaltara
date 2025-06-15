@@ -100,6 +100,100 @@ input[type="range"]::-moz-range-thumb {
   border: none;
 }
 
+/* Form Input Styling - Ensure text readability */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="search"],
+textarea,
+select {
+  color: #1f2937 !important; /* Always use dark text for readability */
+  background-color: #ffffff !important; /* Always use white background */
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="url"]::placeholder,
+input[type="number"]::placeholder,
+input[type="date"]::placeholder,
+input[type="time"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important; /* Gray placeholder text */
+}
+
+/* Dark mode overrides for inputs */
+@media (prefers-color-scheme: dark) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="url"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="search"],
+  textarea,
+  select {
+    color: #1f2937 !important; /* Keep dark text even in dark mode */
+    background-color: #ffffff !important; /* Keep white background */
+    border-color: #d1d5db !important; /* Ensure border is visible */
+  }
+}
+
+/* Date Input Specific Styling */
+input[type="date"] {
+  position: relative;
+  color: #1f2937 !important;
+  background-color: #ffffff !important;
+}
+
+/* Fix date input text visibility in WebKit browsers */
+input[type="date"]::-webkit-datetime-edit {
+  color: #1f2937;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: #1f2937;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #1f2937;
+  padding: 0 0.3em;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field {
+  color: #1f2937;
+}
+
+input[type="date"]::-webkit-datetime-edit-day-field {
+  color: #1f2937;
+}
+
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #1f2937;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  color: #1f2937;
+  opacity: 1;
+}
+
+/* Firefox date input styling */
+input[type="date"]::-moz-datetime-edit-fields {
+  color: #1f2937;
+}
+
+/* Ensure date inputs are always visible */
+input[type="date"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
 /* Line clamp utilities */
 .line-clamp-1 {
   display: -webkit-box;

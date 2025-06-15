@@ -373,8 +373,9 @@ export default function TripPlannerPage() {
                     <input
                       type="date"
                       value={tripForm.startDate}
+                      min={new Date().toISOString().split('T')[0]}
                       onChange={(e) => setTripForm(prev => ({ ...prev, startDate: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900 bg-white"
                       required
                     />
                   </div>
@@ -385,8 +386,9 @@ export default function TripPlannerPage() {
                     <input
                       type="date"
                       value={tripForm.endDate}
+                      min={tripForm.startDate || new Date().toISOString().split('T')[0]}
                       onChange={(e) => setTripForm(prev => ({ ...prev, endDate: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900 bg-white"
                       required
                     />
                   </div>

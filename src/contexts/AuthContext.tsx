@@ -248,10 +248,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(false);
       return { success: false, message: `Terjadi kesalahan: ${error}` };
     }
-  };
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+  };  const logout = async () => {
+    try {
+      console.log('Starting logout process...');
+      setIsLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+      } else {
+        console.log('Supabase signOut successful');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Always clear user state regardless of any errors
+      console.log('Clearing user state...');
+      setUser(null);
+      setIsLoading(false);
+    }
   };
 
   const updateProfile = async (updates: Partial<User>): Promise<boolean> => {

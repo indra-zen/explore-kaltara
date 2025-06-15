@@ -5,6 +5,7 @@ import hotels from '@/data/hotels.json';
 import Map from '@/components/Map';
 import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
+import HotelBookingForm from './HotelBookingForm';
 
 interface HotelPageProps {
   params: Promise<{ slug: string }>;
@@ -134,7 +135,7 @@ export default async function HotelPage({ params }: HotelPageProps) {
             <div className="mb-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Galeri Foto</h3>
               <div className="grid md:grid-cols-3 gap-4">
-                {hotel.gallery.map((image, index) => (
+                {hotel.gallery.map((image: string, index: number) => (
                   <div key={index} className="relative h-48 rounded-lg overflow-hidden">
                     <Image
                       src={image}
@@ -151,7 +152,7 @@ export default async function HotelPage({ params }: HotelPageProps) {
             <div className="mb-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Fasilitas Hotel</h3>
               <div className="grid md:grid-cols-2 gap-4">
-                {hotel.facilities.map((facility, index) => (
+                {hotel.facilities.map((facility: string, index: number) => (
                   <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
                     <span className="text-gray-800">{facility}</span>
@@ -207,46 +208,7 @@ export default async function HotelPage({ params }: HotelPageProps) {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             {/* Booking Card */}
-            <div className="bg-emerald-50 rounded-2xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Pesan Kamar</h3>
-              <div className="space-y-4">
-                <div>
-                  <span className="text-2xl font-bold text-emerald-600">{hotel.priceRange.split(' - ')[0]}</span>
-                  <span className="text-gray-600"> / malam</span>
-                </div>
-                
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
-                    <input type="date" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
-                    <input type="date" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah Tamu</label>
-                    <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                      <option>1 Tamu</option>
-                      <option>2 Tamu</option>
-                      <option>3 Tamu</option>
-                      <option>4 Tamu</option>
-                    </select>
-                  </div>
-                </div>
-
-                <Link 
-                  href={`/booking?item=${hotel.id}&type=hotel`}
-                  className="block w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors text-center"
-                >
-                  Pesan Sekarang
-                </Link>
-                
-                <div className="text-center text-sm text-gray-600">
-                  Check-in: {hotel.checkIn} | Check-out: {hotel.checkOut}
-                </div>
-              </div>
-            </div>
+            <HotelBookingForm hotel={hotel} />
 
             {/* Hotel Info */}
             <div className="bg-gray-50 rounded-2xl p-6 mb-8">
