@@ -6,14 +6,11 @@
     "category": "alam",
     "description": "Kawasan hutan mangrove yang luas, menjadi habitat alami bagi bekantan (kera hidung panjang) dan berbagai jenis burung. Terdapat jembatan kayu yang memudahkan pengunjung untuk menyusuri hutan dan mengamati satwa liar. Merupakan paru-paru kota Tarakan.",
     "rating": 4.5,
-    "image": "/images/hutan-mangrove-bekantan-1.jpg",
+    "image": "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop",
     "gallery": [
-      "/images/hutan-mangrove-bekantan-1.jpg",
-      "/images/hutan-mangrove-bekantan-2.jpg",
-      "/images/hutan-mangrove-bekantan-3.jpg",
-      "/images/hutan-mangrove-bekantan-4.jpg",
-      "/images/hutan-mangrove-bekantan-5.jpg",
-      "/images/hutan-mangrove-bekantan-6.jpg"
+      "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1569163139394-de44cb2dd4e7?w=800&h=600&fit=crop"
     ],
     "coordinates": {
       "lat": 3.3,

@@ -208,5 +208,110 @@
     },
     "checkIn": "14:00",
     "checkOut": "12:00"
+  },
+  {
+    "id": "gtm-hotel-tarakan",
+    "name": "Grand Tarakan Mall Hotel",
+    "location": "Tarakan",
+    "address": "Jl. Yos Sudarso No.8, Karang Balik, Tarakan",
+    "rating": 4.3,
+    "reviewCount": 1150,
+    "category": "hotel-bintang-4",
+    "description": "Hotel bintang 4 yang terhubung langsung dengan Grand Tarakan Mall. Menawarkan kemudahan akses ke pusat perbelanjaan, hiburan, dan kuliner. Pilihan ideal untuk pelancong bisnis dan rekreasi.",
+    "priceRange": "IDR 700,000 - IDR 1,200,000",
+    "image": "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["Akses Langsung ke Mall", "Restoran", "Kolam Renang", "Spa", "Ruang Pertemuan", "WiFi", "AC"],
+    "coordinates": {
+      "lat": 3.31,
+      "lng": 117.585
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": true,
+      "gym": true,
+      "restaurant": true,
+      "spa": true,
+      "parking": true,
+      "airportShuttle": true,
+      "businessCenter": true,
+      "roomService": true
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
+  },
+  {
+    "id": "hotel-laura-nunukan",
+    "name": "Hotel Laura",
+    "location": "Nunukan",
+    "address": "Jl. TVRI, Nunukan Tengah, Kabupaten Nunukan",
+    "rating": 4.1,
+    "reviewCount": 165,
+    "category": "hotel-budget",
+    "description": "Hotel bujet yang berlokasi strategis di pusat kota Nunukan. Menawarkan kamar yang bersih dan nyaman dengan harga terjangkau, menjadi pilihan populer bagi para pelancong.",
+    "priceRange": "IDR 350,000 - IDR 550,000",
+    "image": "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["WiFi", "AC", "TV", "Area Parkir"],
+    "coordinates": {
+      "lat": 4.135,
+      "lng": 117.668
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": false,
+      "gym": false,
+      "restaurant": false,
+      "spa": false,
+      "parking": true,
+      "airportShuttle": false,
+      "businessCenter": false,
+      "roomService": true
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
+  },
+  {
+    "id": "hotel-royal-tarakan",
+    "name": "Hotel Royal Tarakan",
+    "location": "Tarakan",
+    "address": "Jl. Mulawarman No. 6, Karang Anyar Pantai, Tarakan",
+    "rating": 4.0,
+    "reviewCount": 780,
+    "category": "hotel-bintang-3",
+    "description": "Hotel bintang 3 yang menawarkan lokasi strategis di jantung kota Tarakan. Dikenal dengan pelayanannya yang ramah dan akses mudah ke berbagai area bisnis dan pemerintahan.",
+    "priceRange": "IDR 450,000 - IDR 750,000",
+    "image": "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1568495248636-6432b97bd949?w=800&h=600&fit=crop"
+    ],
+    "facilities": ["Restoran", "Ruang Rapat", "Layanan Laundry", "WiFi", "AC", "Antar Jemput Bandara"],
+    "coordinates": {
+      "lat": 3.322,
+      "lng": 117.581
+    },
+    "amenities": {
+      "wifi": true,
+      "pool": false,
+      "gym": false,
+      "restaurant": true,
+      "spa": false,
+      "parking": true,
+      "airportShuttle": true,
+      "businessCenter": true,
+      "roomService": true
+    },
+    "checkIn": "14:00",
+    "checkOut": "12:00"
   }
 ]
