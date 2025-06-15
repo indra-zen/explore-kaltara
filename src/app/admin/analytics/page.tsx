@@ -95,8 +95,7 @@ export default function Analytics() {
       setLoading(false);
     }
   };
-
-  if (isLoading || loading || !analyticsData) {
+  if (isLoading || loading || !analyticsData || !analyticsData.overview) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
@@ -128,10 +127,9 @@ export default function Analytics() {
             </select>
           </div>
         </div>        {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">          <StatsCard
             title="Page Views"
-            value={analyticsData.overview.totalPageViews.toLocaleString()}
+            value={analyticsData.overview?.totalPageViews?.toLocaleString() || '0'}
             icon={Eye}
             change="+12.5%"
             changeType="positive"
@@ -139,7 +137,7 @@ export default function Analytics() {
           />
           <StatsCard
             title="Unique Visitors"
-            value={analyticsData.overview.uniqueVisitors.toLocaleString()}
+            value={analyticsData.overview?.uniqueVisitors?.toLocaleString() || '0'}
             icon={Users}
             change="+8.2%"
             changeType="positive"
@@ -147,7 +145,7 @@ export default function Analytics() {
           />
           <StatsCard
             title="Bounce Rate"
-            value={`${analyticsData.overview.bounceRate}%`}
+            value={`${analyticsData.overview?.bounceRate || 0}%`}
             icon={TrendingUp}
             change="-2.1%"
             changeType="positive"
@@ -155,7 +153,7 @@ export default function Analytics() {
           />
           <StatsCard
             title="Avg. Session"
-            value={analyticsData.overview.avgSessionDuration}
+            value={analyticsData.overview?.avgSessionDuration || '0m 0s'}
             icon={Calendar}
             change="+15.3%"
             changeType="positive"
@@ -168,15 +166,14 @@ export default function Analytics() {
           {/* Traffic Chart */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Website Traffic</h3>            <AnalyticsChart 
-              data={analyticsData.traffic}
+              data={analyticsData.traffic || []}
             />
           </div>
 
           {/* Device Breakdown */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Device Breakdown</h3>
-            <div className="space-y-4">
-              {analyticsData.devices.map((device: any, index: number) => (
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Device Breakdown</h3>            <div className="space-y-4">
+              {(analyticsData.devices || []).map((device: any, index: number) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="w-4 h-4 rounded-full bg-blue-500 mr-3" style={{
@@ -209,7 +206,7 @@ export default function Analytics() {
                   </tr>
                 </thead>
                 <tbody>
-                  {analyticsData.topPages.map((page: any, index: number) => (
+                  {(analyticsData.topPages || []).map((page: any, index: number) => (
                     <tr key={index} className="border-b border-gray-100">
                       <td className="py-3 text-gray-900">{page.page}</td>
                       <td className="py-3 text-gray-600">{page.views.toLocaleString()}</td>
@@ -225,7 +222,7 @@ export default function Analytics() {
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Traffic Sources</h3>
             <div className="space-y-4">
-              {analyticsData.referrers.map((referrer: any, index: number) => (
+              {(analyticsData.referrers || []).map((referrer: any, index: number) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
