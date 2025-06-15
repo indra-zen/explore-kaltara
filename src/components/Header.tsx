@@ -116,8 +116,7 @@ export default function Header() {
                   
                   {showUserMenu && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                      <div className="py-2">
-                        <Link
+                      <div className="py-2">                        <Link
                           href="/profile"
                           className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
                           onClick={handleMenuItemClick}
@@ -133,7 +132,18 @@ export default function Header() {
                           <Calendar className="w-4 h-4" />
                           <span>Trip Planner</span>
                         </Link>
-                        <hr className="my-1" />                        <button
+                        {/* Admin Dashboard Link */}
+                        {user?.email === 'admin@explorekaltara.com' || user?.email === 'demo@admin.com' ? (
+                          <Link
+                            href="/admin"
+                            className="flex items-center space-x-2 px-4 py-2 text-emerald-700 hover:bg-emerald-50 transition-colors"
+                            onClick={handleMenuItemClick}
+                          >
+                            <Settings className="w-4 h-4" />
+                            <span>Admin Dashboard</span>
+                          </Link>
+                        ) : null}
+                        <hr className="my-1" /><button
                           onClick={async () => {
                             await logout();
                             handleMenuItemClick();
