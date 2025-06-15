@@ -36,27 +36,37 @@ export default function DestinationsPage() {
   // CRUD states
   const [showDestinationModal, setShowDestinationModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [currentDestination, setCurrentDestination] = useState<Destination | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [currentDestination, setCurrentDestination] = useState<Destination | null>(null);  const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'warning' } | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !user)) {
+    // Don't do anything while still loading auth state
+    if (isLoading) {
+      setAuthChecked(false);
+      return;
+    }
+
+    // Mark that we've checked authentication
+    setAuthChecked(true);
+
+    // If not authenticated after loading is complete, redirect
+    if (!isAuthenticated || !user) {
       router.push('/');
       return;
     }
 
-    if (user && !isAdminUser(user.email)) {
+    // Check if user is admin
+    if (!isAdminUser(user.email)) {
       router.push('/');
       return;
     }
 
-    if (user && isAdminUser(user.email)) {
-      loadDestinations();
-    }
-  }, [user, isAuthenticated, isLoading, router]);
-
-  const isAdminUser = (email: string) => {
+    // If user is admin, load data
+    loadDestinations();
+  }, [isLoading, isAuthenticated, user]); // Removed router from dependencies
+  const isAdminUser = (email: string | null | undefined): boolean => {
+    if (!email) return false;
     const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
     return adminEmails.includes(email);
   };
@@ -176,13 +186,14 @@ export default function DestinationsPage() {
       </span>
     );
   };
-
-  if (isLoading || loading) {
+  if (isLoading || loading || !authChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">
+            {isLoading ? 'Checking authentication...' : 'Loading destinations...'}
+          </p>
         </div>
       </div>
     );

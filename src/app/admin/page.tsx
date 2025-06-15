@@ -28,7 +28,10 @@ import AdminService from '@/lib/supabase/admin-service';
 export default function AdminDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [dashboardLoading, setDashboardLoading] = useState(false);interface Activity {
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  interface Activity {
     id: number;
     type: string;
     message: string;
@@ -71,28 +74,37 @@ export default function AdminDashboard() {
       topDestinations: [],
       revenue: []
     }
-  });
+  });  useEffect(() => {
+    // Don't do anything while still loading auth state
+    if (isLoading) {
+      setAuthChecked(false);
+      return;
+    }
 
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !user)) {
+    // Mark that we've checked authentication
+    setAuthChecked(true);
+
+    // Only redirect if we're definitely not authenticated after loading
+    if (!isAuthenticated || !user) {
       router.push('/');
       return;
     }
 
-    // Check if user is admin (for demo purposes, we'll use email check)
-    if (user && !isAdminUser(user.email)) {
+    // Check if user is admin
+    if (!isAdminUser(user.email)) {
       router.push('/');
       return;
     }
 
-    // Load dashboard data
+    // Load dashboard data for admin users
     loadDashboardData();
-  }, [user, isAuthenticated, isLoading, router]);
+  }, [isLoading, isAuthenticated, user]); // Removed router from dependencies
 
-  const isAdminUser = (email: string) => {
+  const isAdminUser = (email: string | null | undefined): boolean => {
+    if (!email) return false;
     const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
     return adminEmails.includes(email);
-  };  const loadDashboardData = async () => {
+  };const loadDashboardData = async () => {
     try {
       setDashboardLoading(true);
       
@@ -175,31 +187,23 @@ export default function AdminDashboard() {
     } finally {
       setDashboardLoading(false);
     }
-  };
-  if (isLoading || dashboardLoading) {
+  };  // Show loading while auth is being determined or while dashboard data is loading
+  if (isLoading || dashboardLoading || !authChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading admin dashboard...</p>
+          <p className="mt-4 text-gray-600">
+            {isLoading ? 'Checking authentication...' : 'Loading admin dashboard...'}
+          </p>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
-  if (!isAdminUser(user.email)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You don't have permission to access the admin dashboard.</p>
-        </div>
-      </div>
-    );
+  // Only show "not found" or redirect if we've actually checked auth and confirmed user is not admin
+  if (!isAuthenticated || !user || !isAdminUser(user.email)) {
+    return null; // Let the useEffect handle the redirect
   }
 
   const statsCards = [

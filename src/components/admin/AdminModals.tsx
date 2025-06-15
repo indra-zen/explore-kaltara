@@ -177,6 +177,7 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
     category: 'nature' as 'nature' | 'culture' | 'history' | 'entertainment' | 'adventure',
     price_range: 'free' as 'free' | 'budget' | 'mid-range' | 'expensive',
     rating: 0,
+    images: [] as string[],
     featured_image: '',
     facilities: [] as string[],
     latitude: 0,
@@ -184,7 +185,8 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
     is_featured: false,
     status: 'active' as 'active' | 'inactive' | 'pending'
   });
-
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newFacility, setNewFacility] = useState('');
   useEffect(() => {
     if (destination) {
       setFormData({
@@ -195,6 +197,7 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
         category: destination.category || 'nature',
         price_range: destination.price_range || 'free',
         rating: destination.rating || 0,
+        images: destination.images || [],
         featured_image: destination.featured_image || '',
         facilities: destination.facilities || [],
         latitude: destination.latitude || 0,
@@ -211,6 +214,7 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
         category: 'nature',
         price_range: 'free',
         rating: 0,
+        images: [],
         featured_image: '',
         facilities: [],
         latitude: 0,
@@ -261,13 +265,12 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
-            
-            <div>
+              <div>
               <label className="block text-sm font-medium text-gray-700">Category</label>
               <select
                 required
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">Select Category</option>
@@ -282,7 +285,7 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
               <select
                 required
                 value={formData.price_range}
-                onChange={(e) => setFormData({ ...formData, price_range: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, price_range: e.target.value as any })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">Select Price Range</option>
@@ -303,16 +306,133 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
                 onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) || 0 })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
+            </div>            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Images</label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="Enter image URL"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newImageUrl.trim()) {
+                        setFormData({
+                          ...formData,
+                          images: [...formData.images, newImageUrl.trim()]
+                        });
+                        setNewImageUrl('');
+                      }
+                    }}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.images.length > 0 && (
+                  <div className="space-y-1">
+                    {formData.images.map((image, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                        <img src={image} alt={`Preview ${index + 1}`} className="w-12 h-12 object-cover rounded" />
+                        <span className="flex-1 text-sm text-gray-600 truncate">{image}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              images: formData.images.filter((_, i) => i !== index)
+                            });
+                          }}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Remove
+                        </button>
+                        {!formData.featured_image && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                featured_image: image
+                              });
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-sm"
+                          >
+                            Set as Featured
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+                <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700">Featured Image URL</label>
+                <input
+                  type="text"
+                  value={formData.featured_image}
+                  onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
+                  placeholder="Enter featured image URL or select from images above"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Image URL</label>
-              <input
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Facilities</label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter facility (e.g., Parking, WiFi, Restaurant)"
+                    value={newFacility}
+                    onChange={(e) => setNewFacility(e.target.value)}
+                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newFacility.trim()) {
+                        setFormData({
+                          ...formData,
+                          facilities: [...formData.facilities, newFacility.trim()]
+                        });
+                        setNewFacility('');
+                      }
+                    }}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.facilities.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.facilities.map((facility, index) => (
+                      <div key={index} className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                        <span>{facility}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              facilities: formData.facilities.filter((_, i) => i !== index)
+                            });
+                          }}
+                          className="text-blue-600 hover:text-blue-800 ml-1"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="md:col-span-2">
@@ -378,6 +498,7 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
     price_per_night: 0,
     star_rating: 3,
     rating: 0,
+    images: [] as string[],
     featured_image: '',
     amenities: [] as string[],
     room_types: [] as string[],
@@ -386,7 +507,8 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
     status: 'active' as 'active' | 'inactive' | 'pending',
     is_featured: false
   });
-
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newAmenity, setNewAmenity] = useState('');
   useEffect(() => {
     if (hotel) {
       setFormData({
@@ -397,6 +519,7 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
         price_per_night: hotel.price_per_night || 0,
         star_rating: hotel.star_rating || 3,
         rating: hotel.rating || 0,
+        images: hotel.images || [],
         featured_image: hotel.featured_image || '',
         amenities: hotel.amenities || [],
         room_types: hotel.room_types || [],
@@ -414,6 +537,7 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
         price_per_night: 0,
         star_rating: 3,
         rating: 0,
+        images: [],
         featured_image: '',
         amenities: [],
         room_types: [],
@@ -508,17 +632,135 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
                 value={formData.rating}
                 onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) || 0 })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
+              />            </div>
+            
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Images</label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="Enter image URL"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newImageUrl.trim()) {
+                        setFormData({
+                          ...formData,
+                          images: [...formData.images, newImageUrl.trim()]
+                        });
+                        setNewImageUrl('');
+                      }
+                    }}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.images.length > 0 && (
+                  <div className="space-y-1">
+                    {formData.images.map((image, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                        <img src={image} alt={`Preview ${index + 1}`} className="w-12 h-12 object-cover rounded" />
+                        <span className="flex-1 text-sm text-gray-600 truncate">{image}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              images: formData.images.filter((_, i) => i !== index)
+                            });
+                          }}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Remove
+                        </button>
+                        {!formData.featured_image && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                featured_image: image
+                              });
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-sm"
+                          >
+                            Set as Featured
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+                <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700">Featured Image URL</label>
+                <input
+                  type="text"
+                  value={formData.featured_image}
+                  onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
+                  placeholder="Enter featured image URL or select from images above"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
             </div>
             
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Featured Image URL</label>
-              <input
-                type="url"
-                value={formData.featured_image}
-                onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
+              <label className="block text-sm font-medium text-gray-700">Amenities</label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter amenity (e.g., WiFi, Pool, Gym)"
+                    value={newAmenity}
+                    onChange={(e) => setNewAmenity(e.target.value)}
+                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newAmenity.trim()) {
+                        setFormData({
+                          ...formData,
+                          amenities: [...formData.amenities, newAmenity.trim()]
+                        });
+                        setNewAmenity('');
+                      }
+                    }}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                  >
+                    Add
+                  </button>
+                </div>
+                
+                {formData.amenities.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.amenities.map((amenity, index) => (
+                      <div key={index} className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
+                        <span>{amenity}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              amenities: formData.amenities.filter((_, i) => i !== index)
+                            });
+                          }}
+                          className="text-green-600 hover:text-green-800 ml-1"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="md:col-span-2">

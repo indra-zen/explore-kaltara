@@ -51,14 +51,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       travelStyle: profile.travel_style || 'mid-range'
     },
     joinDate: new Date(profile.created_at).toISOString().split('T')[0]
-  });
-
-  useEffect(() => {
+  });  useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
+        
+        if (session?.user) {
           // Fetch user profile
           let { data: profile } = await supabase
             .from('profiles')
@@ -93,11 +92,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    getInitialSession();
-
-    // Listen for auth changes
+    getInitialSession();    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {        if (event === 'SIGNED_IN' && session?.user) {
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
           // Fetch user profile
           let { data: profile } = await supabase
             .from('profiles')
@@ -127,7 +125,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
         }
-        setIsLoading(false);
+        
+        // Only set loading to false if we're not already loading the initial session
+        if (event !== 'INITIAL_SESSION') {
+          setIsLoading(false);
+        }
       }
     );
 
