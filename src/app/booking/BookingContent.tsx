@@ -325,9 +325,61 @@ function BookingContent() {
       const newBookingId = 'BK' + Date.now().toString().substr(-8);
       setBookingId(newBookingId);
 
-      // Save booking to localStorage (in real app, this would be API call)
+      // Prepare booking data for database
+      // Import AdminService
+      const AdminService = (await import('@/lib/supabase/admin-service')).default;
+      
+      // First resolve the correct database IDs using slugs
+      let destinationId: string | undefined;
+      let hotelId: string | undefined;
+
+      if (bookingItem?.type === 'destination') {
+        const dbDestinationId = await AdminService.findDestinationBySlug(bookingItem.id);
+        if (dbDestinationId) {
+          destinationId = dbDestinationId;
+        } else {
+          console.error(`Destination not found in database: ${bookingItem.id}`);
+        }
+      } else if (bookingItem?.type === 'hotel') {
+        const dbHotelId = await AdminService.findHotelBySlug(bookingItem.id);
+        if (dbHotelId) {
+          hotelId = dbHotelId;
+        } else {
+          console.error(`Hotel not found in database: ${bookingItem.id}`);
+        }
+      }
+
+      const bookingData = {
+        user_id: user.id,
+        booking_type: bookingItem?.type as 'destination' | 'hotel',
+        destination_id: destinationId,
+        hotel_id: hotelId,
+        check_in_date: bookingForm.checkIn,
+        check_out_date: bookingForm.checkOut,
+        guests: bookingForm.guests,
+        rooms: bookingForm.rooms || 1,
+        total_amount: calculateTotal(),
+        currency: 'IDR',
+        status: 'confirmed' as const,
+        payment_status: 'paid' as const,
+        payment_method: 'Credit Card',
+        notes: bookingForm.specialRequests || undefined,
+        contact_name: user.name || paymentForm.cardHolder || 'Guest',
+        contact_email: user.email || '',
+        contact_phone: undefined
+      };
+
+      // Save booking to database
+      const { data: dbBooking, error: dbError } = await AdminService.createBooking(bookingData);
+      
+      if (dbError) {
+        console.error('Database save failed:', dbError);
+        // Still allow the booking to proceed with localStorage fallback
+      }
+
+      // Save booking to localStorage (for backward compatibility and offline access)
       const booking = {
-        id: newBookingId,
+        id: dbBooking?.id || newBookingId,
         userId: user.id,
         item: bookingItem,
         details: bookingForm,
@@ -350,7 +402,7 @@ function BookingContent() {
           const draftKey = `booking-draft-${bookingItem?.id}`;
           localStorage.removeItem(draftKey);
         } catch (error) {
-          console.error('Error saving booking:', error);
+          console.error('Error saving booking to localStorage:', error);
         }
       }
 

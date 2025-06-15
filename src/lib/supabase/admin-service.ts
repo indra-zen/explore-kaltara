@@ -282,9 +282,7 @@ export class AdminService {
       const { data, error, count } = await query
         .range((page - 1) * limit, page * limit - 1);
 
-      if (error) throw error;
-
-      return {
+      if (error) throw error;      return {
         data: data || [],
         count: count || 0,
         totalPages: Math.ceil((count || 0) / limit)
@@ -293,7 +291,60 @@ export class AdminService {
       console.error('Error fetching bookings:', error);
       throw error;
     }
-  }  // Reviews Management
+  }  static async createBooking(bookingData: {
+    user_id: string;
+    destination_id?: string;
+    hotel_id?: string;
+    booking_type: 'destination' | 'hotel' | 'package';
+    check_in_date?: string | null;
+    check_out_date?: string | null;
+    guests?: number;
+    rooms?: number;
+    total_amount: number;
+    currency?: string;
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'refunded';
+    payment_status?: 'pending' | 'paid' | 'failed' | 'refunded';
+    payment_method?: string;
+    notes?: string;
+    contact_name: string;
+    contact_email: string;
+    contact_phone?: string;
+  }) {
+    try {
+      const { data, error } = await supabase        .from('bookings')
+        .insert([{
+          user_id: bookingData.user_id,
+          destination_id: bookingData.destination_id || null,
+          hotel_id: bookingData.hotel_id || null,
+          booking_type: bookingData.booking_type,
+          check_in_date: bookingData.check_in_date || null,
+          check_out_date: bookingData.check_out_date || null,
+          guests: bookingData.guests || 1,
+          rooms: bookingData.rooms || 1,
+          total_amount: bookingData.total_amount,
+          currency: bookingData.currency || 'IDR',
+          status: bookingData.status || 'confirmed',
+          payment_status: bookingData.payment_status || 'paid',
+          payment_method: bookingData.payment_method || 'credit_card',
+          notes: bookingData.notes || null,
+          contact_name: bookingData.contact_name,
+          contact_email: bookingData.contact_email,
+          contact_phone: bookingData.contact_phone || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      return { data: null, error };
+    }
+  }
+
+  // Reviews Management
   static async getReviews(page = 1, limit = 20, status = '') {
     try {
       let query = supabase
@@ -1039,6 +1090,47 @@ export class AdminService {
     } catch (error) {
       console.error('Error logging activity:', error);
       // Don't throw the error to prevent it from breaking the main operation
+    }
+  }
+
+  // Helper methods for booking foreign key resolution
+  static async findDestinationBySlug(slug: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('id')
+        .eq('slug', slug)
+        .single();
+
+      if (error) {
+        console.error('Error finding destination by slug:', error);
+        return null;
+      }
+
+      return data?.id || null;
+    } catch (error) {
+      console.error('Error in findDestinationBySlug:', error);
+      return null;
+    }
+  }
+
+  static async findHotelBySlug(slug: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('hotels')
+        .select('id')
+        .eq('slug', slug)
+        .single();
+
+      if (error) {
+        console.error('Error finding hotel by slug:', error);
+        return null;
+      }
+
+      return data?.id || null;
+    } catch (error) {
+      console.error('Error in findHotelBySlug:', error);
+      return null;
     }
   }
 }
