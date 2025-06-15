@@ -46,15 +46,26 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
         setMessage({ type: 'error', text: 'Nama wajib diisi!' });
         return;
       }
-      
-      const result = await register(formData.name, formData.email, formData.password);
+        const result = await register(formData.name, formData.email, formData.password);
       if (result.success) {
         setMessage({ type: 'success', text: result.message });
-        setTimeout(() => {
-          onClose();
-          setFormData({ name: '', email: '', password: '' });
-          setMessage(null);
-        }, 1500);
+        
+        // If it's a registration success with email confirmation required
+        if (result.message.includes('verifikasi') || result.message.includes('email')) {
+          // Keep modal open longer for email confirmation instructions
+          setTimeout(() => {
+            onClose();
+            setFormData({ name: '', email: '', password: '' });
+            setMessage(null);
+          }, 4000);
+        } else {
+          // Normal success flow
+          setTimeout(() => {
+            onClose();
+            setFormData({ name: '', email: '', password: '' });
+            setMessage(null);
+          }, 1500);
+        }
       } else {
         setMessage({ type: 'error', text: result.message });
       }
@@ -181,22 +192,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'login' }: Au
             ) : (
               mode === 'login' ? 'Masuk' : 'Daftar'
             )}
-          </button>
-        </form>
-
-        {/* Demo Account Info */}
-        {mode === 'login' && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700 font-medium mb-2">Demo Account:</p>
-            <div className="text-xs text-blue-600 space-y-1">
-              <p>Email: budi@example.com</p>
-              <p>Password: password123</p>
-              <hr className="border-blue-200 my-2" />
-              <p>Email: sari@example.com</p>
-              <p>Password: password456</p>
-            </div>
-          </div>
-        )}
+          </button>        </form>
 
         {/* Switch Mode */}
         <div className="mt-8 text-center">

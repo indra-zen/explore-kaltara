@@ -189,10 +189,9 @@ export default function MobileNavigation() {
                       </div>
                     </Link>
                     
-                    {/* Logout */}
-                    <button
-                      onClick={() => {
-                        logout();
+                    {/* Logout */}                    <button
+                      onClick={async () => {
+                        await logout();
                         setIsMenuOpen(false);
                       }}
                       className="flex items-center px-6 py-4 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors w-full text-left"

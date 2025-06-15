@@ -1,6 +1,11 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/lib/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface User {
   id: string;
@@ -34,135 +39,217 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Mock users database
-  const mockUsers = [
-    {
-      id: '1',
-      name: 'Budi Santoso',
-      email: 'budi@example.com',
-      password: 'password123',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      preferences: {
-        favoriteLocations: ['Tarakan', 'Malinau'],
-        interests: ['Alam', 'Budaya', 'Fotografi'],
-        travelStyle: 'mid-range' as const
-      },
-      joinDate: '2024-01-15'
+  // Helper function to convert Supabase profile to our User type
+  const convertProfileToUser = (profile: Profile): User => ({
+    id: profile.id,
+    name: profile.name || 'User',
+    email: profile.email,
+    avatar: profile.avatar_url || undefined,
+    preferences: {
+      favoriteLocations: profile.favorite_locations || [],
+      interests: profile.interests || [],
+      travelStyle: profile.travel_style || 'mid-range'
     },
-    {
-      id: '2',
-      name: 'Sari Dewi',
-      email: 'sari@example.com',
-      password: 'password456',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      preferences: {
-        favoriteLocations: ['Nunukan', 'Bulungan'],
-        interests: ['Kuliner', 'Pantai', 'Adventure'],
-        travelStyle: 'luxury' as const
-      },
-      joinDate: '2024-02-20'
-    }
-  ];
+    joinDate: new Date(profile.created_at).toISOString().split('T')[0]
+  });
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
-    if (typeof window === 'undefined') {
-      setIsLoading(false);
-      return;
-    }
-    
-    try {
-      const savedUser = localStorage.getItem('kaltara-user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-      }
-    } catch (error) {
-      console.error('Error parsing saved user:', error);
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        localStorage.removeItem('kaltara-user');
-      } catch (e) {
-        console.error('Error removing corrupted user data:', e);
+        const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+          // Fetch user profile
+          let { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          // If profile doesn't exist, create it
+          if (!profile) {
+            const { data: newProfile } = await supabase
+              .from('profiles')
+              .insert({
+                id: session.user.id,
+                email: session.user.email!,
+                name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                avatar_url: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User')}&background=10b981&color=fff&size=100`
+              })
+              .select()
+              .single();
+            
+            profile = newProfile;
+          }
+          
+          if (profile) {
+            setUser(convertProfileToUser(profile));
+          }
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
-  }, []);
+    };
 
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {        if (event === 'SIGNED_IN' && session?.user) {
+          // Fetch user profile
+          let { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          // If profile doesn't exist, create it
+          if (!profile) {
+            const { data: newProfile } = await supabase
+              .from('profiles')
+              .insert({
+                id: session.user.id,
+                email: session.user.email!,
+                name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                avatar_url: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User')}&background=10b981&color=fff&size=100`
+              })
+              .select()
+              .single();
+            
+            profile = newProfile;
+          }
+          
+          if (profile) {
+            setUser(convertProfileToUser(profile));
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
   const login = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const foundUser = mockUsers.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      const userWithoutPassword = {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        avatar: foundUser.avatar,
-        preferences: foundUser.preferences,
-        joinDate: foundUser.joinDate
-      };
-      
-      setUser(userWithoutPassword);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('kaltara-user', JSON.stringify(userWithoutPassword));
-      }
-      setIsLoading(false);
-      
-      return { success: true, message: 'Login berhasil!' };
-    } else {
-      setIsLoading(false);
-      return { success: false, message: 'Email atau password salah!' };
-    }
-  };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
+      if (error) {
+        setIsLoading(false);
+        return { 
+          success: false, 
+          message: error.message === 'Invalid login credentials' 
+            ? 'Email atau password salah!' 
+            : error.message 
+        };
+      }
+
+      if (data.user) {
+        // Profile will be set automatically by the auth state change listener
+        setIsLoading(false);
+        return { success: true, message: 'Login berhasil!' };
+      }
+
+      setIsLoading(false);
+      return { success: false, message: 'Terjadi kesalahan saat login!' };
+    } catch (error) {
+      setIsLoading(false);
+      return { success: false, message: 'Terjadi kesalahan saat login!' };
+    }
+  };  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
-    // Check if email already exists
-    const existingUser = mockUsers.find(u => u.email === email);
-    if (existingUser) {
-      setIsLoading(false);
-      return { success: false, message: 'Email sudah terdaftar!' };
-    }
-    
-    // Create new user
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      name,
-      email,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=fff&size=100`,
-      preferences: {
-        favoriteLocations: [],
-        interests: [],
-        travelStyle: 'mid-range'
-      },
-      joinDate: new Date().toISOString().split('T')[0]
-    };
-    
-    // Add to mock database (in real app, this would be API call)
-    mockUsers.push({ ...newUser, password } as any);
-    
-    setUser(newUser);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('kaltara-user', JSON.stringify(newUser));
-    }
-    setIsLoading(false);
-    
-    return { success: true, message: 'Registrasi berhasil!' };
-  };
+    try {
+      console.log('Attempting registration for:', email);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+          },
+        },
+      });
 
-  const logout = () => {
-    setUser(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('kaltara-user');
+      console.log('Registration response:', { data, error });
+
+      if (error) {
+        console.error('Registration error:', error);
+        setIsLoading(false);
+        
+        // Handle specific error cases
+        if (error.message.includes('already registered')) {
+          return { success: false, message: 'Email sudah terdaftar!' };
+        } else if (error.message.includes('email_address_invalid')) {
+          return { success: false, message: 'Format email tidak valid!' };
+        } else if (error.message.includes('password')) {
+          return { success: false, message: 'Password harus minimal 6 karakter!' };
+        }
+        
+        return { 
+          success: false, 
+          message: `Error: ${error.message}`
+        };
+      }      if (data.user) {
+        console.log('User created:', data.user);
+        
+        // If user is confirmed or confirmations are disabled, sign them in
+        if (data.user.email_confirmed_at || data.session) {
+          console.log('User confirmed, creating profile...');
+          
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                email: data.user.email!,
+                name: name
+              })
+              .select()
+              .single();
+            
+            if (profileError) {
+              console.warn('Profile creation failed:', profileError.message);
+            } else {
+              console.log('Profile created:', profileData);
+              setUser(convertProfileToUser(profileData));
+            }
+          } catch (profileErr) {
+            console.warn('Profile creation error:', profileErr);
+          }
+        } else {
+          console.log('User needs email confirmation - profile will be created on first login');
+        }
+        
+        setIsLoading(false);
+        return { 
+          success: true, 
+          message: data.user.email_confirmed_at 
+            ? 'Registrasi berhasil! Anda sudah masuk.' 
+            : 'Registrasi berhasil! Silakan cek email untuk verifikasi, lalu login.'
+        };
+      }
+
+      setIsLoading(false);
+      return { success: false, message: 'Terjadi kesalahan saat registrasi!' };
+    } catch (error) {
+      console.error('Registration catch error:', error);
+      setIsLoading(false);
+      return { success: false, message: `Terjadi kesalahan: ${error}` };
     }
+  };
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
   };
 
   const updateProfile = async (updates: Partial<User>): Promise<boolean> => {
@@ -170,17 +257,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     setIsLoading(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('kaltara-user', JSON.stringify(updatedUser));
+    try {
+      const profileUpdates: Database['public']['Tables']['profiles']['Update'] = {};
+      
+      if (updates.name !== undefined) {
+        profileUpdates.name = updates.name;
+      }
+      
+      if (updates.preferences) {
+        if (updates.preferences.favoriteLocations !== undefined) {
+          profileUpdates.favorite_locations = updates.preferences.favoriteLocations;
+        }
+        if (updates.preferences.interests !== undefined) {
+          profileUpdates.interests = updates.preferences.interests;
+        }
+        if (updates.preferences.travelStyle !== undefined) {
+          profileUpdates.travel_style = updates.preferences.travelStyle;
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(profileUpdates)
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        setIsLoading(false);
+        return false;
+      }
+
+      if (data) {
+        setUser(convertProfileToUser(data));
+      }
+
+      setIsLoading(false);
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setIsLoading(false);
+      return false;
     }
-    
-    setIsLoading(false);
-    return true;
   };
 
   const value: AuthContextType = {
