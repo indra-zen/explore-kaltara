@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import type { Database } from './types';
+import type { Database } from './database.types';
 
 type Tables = Database['public']['Tables'];
 type Profile = Tables['profiles']['Row'];
@@ -52,18 +52,30 @@ export class AdminService {
           action,
           description,
           created_at,
-          profiles!activity_logs_user_id_fkey(name, email)
+          user_id
         `)
         .order('created_at', { ascending: false })
-        .limit(limit);
+        .limit(limit);      if (error) throw error;
+      
+      // Get user profiles separately to avoid complex joins
+      const userIds = data?.map(log => log.user_id).filter(Boolean) || [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', userIds);
 
-      if (error) throw error;      return data?.map(log => ({
-        id: log.id,
-        type: log.action,
-        message: log.description,
-        user: (log.profiles as any)?.name || (log.profiles as any)?.email || 'Unknown User',
-        timestamp: new Date(log.created_at)
-      })) || [];
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      return data?.map(log => {
+        const profile = profileMap.get(log.user_id);
+        return {
+          id: log.id,
+          type: log.action,
+          message: log.description,
+          user: profile?.name || profile?.email || 'Unknown User',
+          timestamp: new Date(log.created_at)
+        };
+      }) || [];
     } catch (error) {
       console.error('Error fetching recent activity:', error);
       return [];
@@ -224,16 +236,14 @@ export class AdminService {
       console.error('Error fetching hotels:', error);
       throw error;
     }
-  }
-
-  // Bookings Management
+  }  // Bookings Management
   static async getBookings(page = 1, limit = 20, status = '') {
     try {
       let query = supabase
         .from('bookings')
         .select(`
           *,
-          profiles!bookings_user_id_fkey(name, email),
+          profiles(name, email),
           hotels(name),
           destinations(name)
         `, { count: 'exact' })
@@ -257,16 +267,14 @@ export class AdminService {
       console.error('Error fetching bookings:', error);
       throw error;
     }
-  }
-
-  // Reviews Management
+  }  // Reviews Management
   static async getReviews(page = 1, limit = 20, status = '') {
     try {
       let query = supabase
         .from('reviews')
         .select(`
           *,
-          profiles!reviews_user_id_fkey(name, email),
+          profiles(name, email),
           hotels(name),
           destinations(name)
         `, { count: 'exact' })
@@ -355,6 +363,500 @@ export class AdminService {
     }
   }
 
+  // ==========================
+  // DESTINATIONS CRUD OPERATIONS
+  // ==========================
+
+  static async createDestination(destinationData: {
+    name: string;
+    slug: string;
+    description: string;
+    location: string;
+    price_range: string;
+    category: string;
+    image_url?: string;
+    gallery?: string[];
+    features?: string[];
+    coordinates?: { lat: number; lng: number };
+  }) {
+    try {
+      const { data, error } = await supabase
+        .from('destinations')
+        .insert([destinationData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'create',
+        'destination',
+        data.id,
+        `Created destination: ${destinationData.name}`,
+        destinationData
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error creating destination:', error);
+      throw error;
+    }
+  }
+
+  static async updateDestination(id: string, destinationData: Partial<{
+    name: string;
+    slug: string;
+    description: string;
+    location: string;
+    price_range: string;
+    category: string;
+    image_url: string;
+    gallery: string[];
+    features: string[];
+    coordinates: { lat: number; lng: number };
+  }>) {
+    try {
+      const { data, error } = await supabase
+        .from('destinations')
+        .update(destinationData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'update',
+        'destination',
+        id,
+        `Updated destination: ${destinationData.name || 'Unknown'}`,
+        destinationData
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error updating destination:', error);
+      throw error;
+    }
+  }
+
+  static async deleteDestination(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('destinations')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'delete',
+        'destination',
+        id,
+        `Deleted destination: ${data.name}`,
+        { deleted_destination: data }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error deleting destination:', error);
+      throw error;
+    }
+  }
+
+  // ==========================
+  // HOTELS CRUD OPERATIONS
+  // ==========================
+
+  static async createHotel(hotelData: {
+    name: string;
+    slug: string;
+    description: string;
+    location: string;
+    price_per_night: number;
+    rating: number;
+    amenities: string[];
+    image_url?: string;
+    gallery?: string[];
+    contact_info?: any;
+    policies?: any;
+  }) {
+    try {
+      const { data, error } = await supabase
+        .from('hotels')
+        .insert([hotelData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'create',
+        'hotel',
+        data.id,
+        `Created hotel: ${hotelData.name}`,
+        hotelData
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error creating hotel:', error);
+      throw error;
+    }
+  }
+
+  static async updateHotel(id: string, hotelData: Partial<{
+    name: string;
+    slug: string;
+    description: string;
+    location: string;
+    price_per_night: number;
+    rating: number;
+    amenities: string[];
+    image_url: string;
+    gallery: string[];
+    contact_info: any;
+    policies: any;
+  }>) {
+    try {
+      const { data, error } = await supabase
+        .from('hotels')
+        .update(hotelData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'update',
+        'hotel',
+        id,
+        `Updated hotel: ${hotelData.name || 'Unknown'}`,
+        hotelData
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error updating hotel:', error);
+      throw error;
+    }
+  }
+
+  static async deleteHotel(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('hotels')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'delete',
+        'hotel',
+        id,
+        `Deleted hotel: ${data.name}`,
+        { deleted_hotel: data }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error deleting hotel:', error);
+      throw error;
+    }
+  }
+
+  // ==========================
+  // BOOKINGS CRUD OPERATIONS
+  // ==========================
+
+  static async updateBooking(id: string, bookingData: Partial<{
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+    check_in_date: string;
+    check_out_date: string;
+    guests: number;
+    total_amount: number;
+    notes: string;
+  }>) {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update(bookingData)
+        .eq('id', id)
+        .select(`
+          *,
+          profiles(name, email),
+          hotels(name),
+          destinations(name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'update',
+        'booking',
+        id,
+        `Updated booking status to: ${bookingData.status || 'modified'}`,
+        bookingData
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      throw error;
+    }
+  }
+
+  static async deleteBooking(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('id', id)
+        .select(`
+          *,
+          profiles(name, email),
+          hotels(name),
+          destinations(name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'delete',
+        'booking',
+        id,
+        `Deleted booking`,
+        { deleted_booking: data }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+      throw error;
+    }
+  }
+
+  // ==========================
+  // REVIEWS CRUD OPERATIONS
+  // ==========================
+
+  static async updateReview(id: string, reviewData: Partial<{
+    rating: number;
+    comment: string;
+    status: 'pending' | 'approved' | 'rejected';
+    admin_notes: string;
+  }>) {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .update(reviewData)
+        .eq('id', id)
+        .select(`
+          *,
+          profiles(name, email),
+          hotels(name),
+          destinations(name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'update',
+        'review',
+        id,
+        `Updated review status to: ${reviewData.status || 'modified'}`,
+        reviewData
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error updating review:', error);
+      throw error;
+    }
+  }
+
+  static async deleteReview(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', id)
+        .select(`
+          *,
+          profiles(name, email),
+          hotels(name),
+          destinations(name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'delete',
+        'review',
+        id,
+        `Deleted review`,
+        { deleted_review: data }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      throw error;
+    }
+  }
+
+  // ==========================
+  // USER MANAGEMENT OPERATIONS
+  // ==========================
+
+  static async updateUserProfile(id: string, profileData: Partial<{
+    name: string;
+    avatar_url: string;
+    favorite_locations: string[];
+    interests: string[];
+    travel_style: 'budget' | 'mid-range' | 'luxury';
+    is_admin: boolean;
+  }>) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'update',
+        'user',
+        id,
+        `Updated user profile: ${profileData.name || 'Unknown'}`,
+        profileData
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  }
+
+  static async deleteUser(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'delete',
+        'user',
+        id,
+        `Deleted user profile: ${data.name}`,
+        { deleted_user: data }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
+
+  // ==========================
+  // BULK OPERATIONS
+  // ==========================
+
+  static async bulkUpdateBookingStatus(bookingIds: string[], status: string) {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update({ status })
+        .in('id', bookingIds)
+        .select();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'bulk_update',
+        'booking',
+        bookingIds.join(','),
+        `Bulk updated ${bookingIds.length} bookings to status: ${status}`,
+        { booking_ids: bookingIds, new_status: status }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error bulk updating bookings:', error);
+      throw error;
+    }
+  }
+
+  static async bulkDeleteBookings(bookingIds: string[]) {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .delete()
+        .in('id', bookingIds)
+        .select();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'bulk_delete',
+        'booking',
+        bookingIds.join(','),
+        `Bulk deleted ${bookingIds.length} bookings`,
+        { deleted_booking_ids: bookingIds }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error bulk deleting bookings:', error);
+      throw error;
+    }
+  }
+
+  static async bulkApproveReviews(reviewIds: string[]) {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .update({ status: 'approved' })
+        .in('id', reviewIds)
+        .select();
+
+      if (error) throw error;
+
+      await this.logActivity(
+        'bulk_approve',
+        'review',
+        reviewIds.join(','),
+        `Bulk approved ${reviewIds.length} reviews`,
+        { approved_review_ids: reviewIds }
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error bulk approving reviews:', error);
+      throw error;
+    }
+  }
+
   // Log admin activity
   static async logActivity(
     action: string,
@@ -379,8 +881,7 @@ export class AdminService {
           metadata
         });
 
-      if (error) throw error;
-    } catch (error) {
+      if (error) throw error;    } catch (error) {
       console.error('Error logging activity:', error);
     }
   }

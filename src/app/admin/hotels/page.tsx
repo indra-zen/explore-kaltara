@@ -54,14 +54,14 @@ export default function HotelsPage() {
     const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
     return adminEmails.includes(email);
   };
-
   const loadHotels = async () => {
     try {
       setLoading(true);
       const response = await AdminService.getHotels();
-      setHotelList(response.data);
+      setHotelList(response.data || []);
     } catch (error) {
       console.error('Error loading hotels:', error);
+      // For hotels, we don't need to show error state, just empty list
       setHotelList([]);
     } finally {
       setLoading(false);

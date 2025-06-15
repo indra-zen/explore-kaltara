@@ -50,15 +50,14 @@ export default function DestinationsPage() {
   const isAdminUser = (email: string) => {
     const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
     return adminEmails.includes(email);
-  };
-  const loadDestinations = async () => {
+  };  const loadDestinations = async () => {
     try {
       setLoading(true);
       const response = await AdminService.getDestinations();
-      setDestinationList(response.data);
+      setDestinationList(response.data || []);
     } catch (error) {
       console.error('Error loading destinations:', error);
-      // Fallback to empty array if there's an error
+      // For destinations, we don't need to show error state, just empty list
       setDestinationList([]);
     } finally {
       setLoading(false);

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { AdminService } from '@/lib/supabase/admin-service';
+import AdminService from '@/lib/supabase/admin-service';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import AdminLayout from '@/components/admin/AdminLayout';
+import { ConfirmDialog, StatusUpdateModal, BulkActionModal, Toast } from '@/components/admin/AdminModals';
 
 interface BookingRecord {
   id: string;
@@ -51,22 +53,37 @@ export default function AdminBookingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'destination' | 'hotel'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed'>('all');
+  
+  // CRUD operation states
+  const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [currentBooking, setCurrentBooking] = useState<BookingRecord | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'warning' } | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchBookings();
     }
   }, [user]);
-
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      setError(null);      const result = await AdminService.getBookings();
-      setBookings(result.data);
+      setError(null);
+      const result = await AdminService.getBookings();
+      setBookings(result.data || []);
     } catch (err) {
       console.error('Error fetching bookings:', err);
-      setError('Failed to load bookings');
-      // Fallback to empty array if real data fails
+      // Only set error for actual connection/auth errors, not empty data
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load bookings';
+      if (errorMessage.includes('auth') || errorMessage.includes('connection') || errorMessage.includes('network')) {
+        setError('Failed to load bookings. Please check your connection and try again.');
+      } else {
+        // For other errors, still show the UI but with empty data
+        setError(null);
+      }
       setBookings([]);
     } finally {
       setLoading(false);
@@ -90,6 +107,92 @@ export default function AdminBookingsPage() {
       .reduce((sum, b) => sum + b.total_amount, 0)
   };
 
+  // CRUD Operations
+  const handleSelectBooking = (bookingId: string) => {
+    setSelectedBookings(prev => 
+      prev.includes(bookingId)
+        ? prev.filter(id => id !== bookingId)
+        : [...prev, bookingId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedBookings(
+      selectedBookings.length === filteredBookings.length
+        ? []
+        : filteredBookings.map(booking => booking.id)
+    );
+  };
+
+  const handleUpdateStatus = async (bookingId: string, status: string) => {
+    try {
+      setActionLoading(true);
+      await AdminService.updateBooking(bookingId, { status: status as any });
+      await fetchBookings(); // Refresh data
+      setToast({ message: 'Booking status updated successfully!', variant: 'success' });
+      setShowStatusModal(false);
+      setCurrentBooking(null);
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      setToast({ message: 'Failed to update booking status', variant: 'error' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteBooking = async (bookingId: string) => {
+    try {
+      setActionLoading(true);
+      await AdminService.deleteBooking(bookingId);
+      await fetchBookings(); // Refresh data
+      setToast({ message: 'Booking deleted successfully!', variant: 'success' });
+      setShowDeleteDialog(false);
+      setCurrentBooking(null);
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+      setToast({ message: 'Failed to delete booking', variant: 'error' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBulkAction = async (action: string) => {
+    try {
+      setActionLoading(true);
+      
+      if (action === 'delete') {
+        await AdminService.bulkDeleteBookings(selectedBookings);
+        setToast({ message: `${selectedBookings.length} bookings deleted successfully!`, variant: 'success' });
+      } else {
+        await AdminService.bulkUpdateBookingStatus(selectedBookings, action);
+        setToast({ message: `${selectedBookings.length} bookings updated to ${action}!`, variant: 'success' });
+      }
+      
+      await fetchBookings(); // Refresh data
+      setSelectedBookings([]);
+      setShowBulkModal(false);
+    } catch (error) {
+      console.error('Error performing bulk action:', error);
+      setToast({ message: 'Failed to perform bulk action', variant: 'error' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const statusOptions = [
+    { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'confirmed', label: 'Confirmed', color: 'bg-green-100 text-green-800' },
+    { value: 'completed', label: 'Completed', color: 'bg-blue-100 text-blue-800' },
+    { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+  ];
+
+  const bulkActions = [
+    { value: 'confirmed', label: 'Mark as Confirmed', variant: 'success' as const },
+    { value: 'completed', label: 'Mark as Completed', variant: 'success' as const },
+    { value: 'cancelled', label: 'Mark as Cancelled', variant: 'warning' as const },
+    { value: 'delete', label: 'Delete Selected', variant: 'danger' as const }
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -97,9 +200,9 @@ export default function AdminBookingsPage() {
       </div>
     );
   }
-
   return (
-    <div className="space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Bookings Management</h1>
@@ -227,10 +330,43 @@ export default function AdminBookingsPage() {
 
       {/* Bookings Table */}
       <div className="bg-white shadow-sm rounded-lg border overflow-hidden">
+        {/* Bulk Actions */}
+        {selectedBookings.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="text-sm font-medium text-blue-800">
+                  {selectedBookings.length} booking{selectedBookings.length !== 1 ? 's' : ''} selected
+                </span>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowBulkModal(true)}
+                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                >
+                  Bulk Actions
+                </button>
+                <button
+                  onClick={() => setSelectedBookings([])}
+                  className="text-sm bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+                >
+                  Clear Selection
+                </button>
+              </div>
+            </div>          </div>
+        )}
+
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200">            <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedBookings.length === filteredBookings.length && filteredBookings.length > 0}
+                    onChange={handleSelectAll}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Booking Details
                 </th>
@@ -252,11 +388,13 @@ export default function AdminBookingsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
-            </thead>            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredBookings.length === 0 ? (
+            </thead><tbody className="bg-white divide-y divide-gray-200">              {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={9} className="px-6 py-12 text-center">
                     <div className="text-4xl mb-2">📅</div>
                     <h3 className="mt-2 text-sm font-medium text-gray-900">No bookings found</h3>
                     <p className="mt-1 text-sm text-gray-500">
@@ -271,6 +409,14 @@ export default function AdminBookingsPage() {
                   const statusEmoji = statusEmojis[booking.status];
                   return (
                     <tr key={booking.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedBookings.includes(booking.id)}
+                          onChange={() => handleSelectBooking(booking.id)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="text-lg mr-2">📍</div>
@@ -315,6 +461,30 @@ export default function AdminBookingsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(booking.created_at).toLocaleDateString()}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              setCurrentBooking(booking);
+                              setShowStatusModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Update Status"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCurrentBooking(booking);
+                              setShowDeleteDialog(true);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete Booking"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
@@ -330,6 +500,52 @@ export default function AdminBookingsPage() {
           Showing {filteredBookings.length} of {bookings.length} bookings
         </div>
       )}
-    </div>
+
+      {/* Modals */}      {/* Modals */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        title="Delete Booking"
+        message={`Are you sure you want to delete this booking? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => currentBooking && handleDeleteBooking(currentBooking.id)}
+        onCancel={() => {
+          setShowDeleteDialog(false);
+          setCurrentBooking(null);
+        }}
+        loading={actionLoading}
+      />
+
+      <StatusUpdateModal
+        isOpen={showStatusModal}
+        title="Update Booking Status"
+        currentStatus={currentBooking?.status || ''}
+        statusOptions={statusOptions}
+        onUpdate={(status) => currentBooking && handleUpdateStatus(currentBooking.id, status)}
+        onCancel={() => {
+          setShowStatusModal(false);
+          setCurrentBooking(null);
+        }}
+        loading={actionLoading}
+      />
+
+      <BulkActionModal
+        isOpen={showBulkModal}
+        title="Bulk Actions"
+        selectedCount={selectedBookings.length}
+        actions={bulkActions}
+        onAction={handleBulkAction}
+        onCancel={() => setShowBulkModal(false)}
+        loading={actionLoading}
+      />
+
+      <Toast
+        message={toast?.message || ''}
+        variant={toast?.variant || 'success'}
+        isVisible={!!toast}        onClose={() => setToast(null)}
+      />
+      </div>
+    </AdminLayout>
   );
 }

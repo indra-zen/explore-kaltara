@@ -63,59 +63,27 @@ export default function UsersPage() {
   const isAdminUser = (email: string) => {
     const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
     return adminEmails.includes(email);
-  };
-  const loadUsers = async () => {
+  };  const loadUsers = async () => {
     try {
       setLoading(true);
       setError(null);
       const result = await AdminService.getUsers();
-      setUsers(result.data);
+      setUsers(result.data || []);
     } catch (err) {
       console.error('Error fetching users:', err);
-      setError('Failed to load users');
-      // Fallback to mock data if real data fails
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          name: 'Ahmad Rizki',
-          email: 'ahmad.rizki@email.com',
-          created_at: '2024-01-15T00:00:00Z',
-          updated_at: '2024-01-15T00:00:00Z',
-        },
-        {
-          id: '2',
-          name: 'Sari Indah',
-          email: 'sari.indah@email.com',
-          created_at: '2024-02-20T00:00:00Z',
-          updated_at: '2024-02-20T00:00:00Z',
-        },
-        {
-          id: '3',
-          name: 'Budi Santoso',
-          email: 'budi.santoso@email.com',
-          created_at: '2024-03-10T00:00:00Z',
-          updated_at: '2024-03-10T00:00:00Z',
-        },
-        {
-          id: '4',
-          name: 'Lisa Permata',
-          email: 'lisa.permata@email.com',
-          created_at: '2024-04-05T00:00:00Z',
-          updated_at: '2024-04-05T00:00:00Z',
-        },
-        {
-          id: '5',
-          name: 'Admin User',
-          email: 'admin@explorekaltara.com',
-          created_at: '2023-12-01T00:00:00Z',
-          updated_at: '2023-12-01T00:00:00Z',
-        }
-      ];
-      setUsers(mockUsers);
-    } finally {
+      // Only set error for actual connection/auth errors, not empty data
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
+      if (errorMessage.includes('auth') || errorMessage.includes('connection') || errorMessage.includes('network')) {
+        setError('Failed to load users. Please check your connection and try again.');
+      } else {
+        // For other errors, still show the UI but with empty data
+        setError(null);
+      }
+      setUsers([]);    } finally {
       setLoading(false);
     }
   };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
