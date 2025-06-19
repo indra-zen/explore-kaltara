@@ -1,36 +1,36 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, Edit, BarChart3, Settings, Download } from 'lucide-react';
+import { Edit, BarChart3, Settings } from 'lucide-react';
 
 export default function QuickActions() {
   const actions = [
     {
-      title: 'Add Destination',
-      description: 'Create new destination',
-      href: '/admin/destinations/new',
-      icon: Plus,
+      title: 'Manage Destinations',
+      description: 'View & edit destinations',
+      href: '/admin/destinations',
+      icon: Edit,
       color: 'bg-emerald-600 hover:bg-emerald-700'
     },
     {
-      title: 'Add Hotel',
-      description: 'Add new hotel listing',
-      href: '/admin/hotels/new',
-      icon: Plus,
+      title: 'Manage Hotels',
+      description: 'View & edit hotels',
+      href: '/admin/hotels',
+      icon: Edit,
       color: 'bg-blue-600 hover:bg-blue-700'
     },
     {
-      title: 'View Analytics',
-      description: 'Detailed analytics',
-      href: '/admin/analytics',
+      title: 'View Bookings',
+      description: 'Manage bookings',
+      href: '/admin/bookings',
       icon: BarChart3,
       color: 'bg-purple-600 hover:bg-purple-700'
     },
     {
-      title: 'Export Data',
-      description: 'Download reports',
-      href: '#',
-      icon: Download,
+      title: 'Manage Users',
+      description: 'View user accounts',
+      href: '/admin/users',
+      icon: Settings,
       color: 'bg-gray-600 hover:bg-gray-700'
     }
   ];

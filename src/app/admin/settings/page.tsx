@@ -128,19 +128,31 @@ export default function SettingsPage() {
   };
 
   const loadSettings = async () => {
-    // In a real app, load settings from API
-    // For demo, we use the default values set in useState
+    // Load settings from localStorage for demo
+    try {
+      const savedSettings = localStorage.getItem('admin-settings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        setSettings(prevSettings => ({
+          ...prevSettings,
+          ...parsed
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save to localStorage for demo
+      localStorage.setItem('admin-settings', JSON.stringify(settings));
       
       setSaveMessage({ type: 'success', text: 'Settings saved successfully!' });
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
+      console.error('Error saving settings:', error);
       setSaveMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
       setTimeout(() => setSaveMessage(null), 3000);
     } finally {
