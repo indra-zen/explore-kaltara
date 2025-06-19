@@ -119,24 +119,24 @@ export default function UsersPage() {
     }
   };
 
-  // const filteredUsers = users.filter(user => {
-  //   const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //                        user.email.toLowerCase().includes(searchTerm.toLowerCase());
-  //   const matchesRole = filterRole === 'all' || 
-  //                      (filterRole === 'admin' && user.is_admin) ||
-  //                      (filterRole === 'user' && !user.is_admin);
-  //   return matchesSearch && matchesRole;
-  // });
   const filteredUsers = users.filter(user => {
-    const name = user.name || '';
-    const email = user.email || '';
-    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' ||
-      (filterRole === 'admin' && user.is_admin) ||
-      (filterRole === 'user' && !user.is_admin);
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === 'all' || 
+                       (filterRole === 'admin' && user.is_admin) ||
+                       (filterRole === 'user' && !user.is_admin);
     return matchesSearch && matchesRole;
   });
+  // const filteredUsers = users.filter(user => {
+  //   const name = user.name || '';
+  //   const email = user.email || '';
+  //   const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     email.toLowerCase().includes(searchTerm.toLowerCase());
+  //   const matchesRole = filterRole === 'all' ||
+  //     (filterRole === 'admin' && user.is_admin) ||
+  //     (filterRole === 'user' && !user.is_admin);
+  //   return matchesSearch && matchesRole;
+  // });
 
   const handleSelectUser = (userId: string) => {
     setSelectedUsers(prev =>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { isAdminUser } from '@/lib/auth/admin';
 import { 
   Users, 
   MapPin, 
@@ -100,11 +101,9 @@ export default function AdminDashboard() {
     loadDashboardData();
   }, [isLoading, isAuthenticated, user, router]); // Added router to dependencies
 
-  const isAdminUser = (email: string | null | undefined): boolean => {
-    if (!email) return false;
-    const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
-    return adminEmails.includes(email);
-  };const loadDashboardData = async () => {
+  // isAdminUser is now imported from centralized location
+
+  const loadDashboardData = async () => {
     try {
       setDashboardLoading(true);
       
