@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import destinations from '@/data/destinations.json';
+import { PublicDataService } from '@/lib/supabase/public-service';
+import type { Destination } from '@/lib/supabase/types';
 import Map from '@/components/Map';
 import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
@@ -12,34 +13,49 @@ interface DestinationPageProps {
 }
 
 export async function generateStaticParams() {
-  return destinations.map((destination) => ({
-    slug: destination.id,
-  }));
+  try {
+    const result = await PublicDataService.getDestinations();
+    return result.data.map((destination: Destination) => ({
+      slug: destination.slug,
+    }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: DestinationPageProps) {
-  const { slug } = await params;
-  const destination = destinations.find((dest) => dest.id === slug);
-  
-  if (!destination) {
+  try {
+    const { slug } = await params;
+    const result = await PublicDataService.getDestinations();
+    const destination = result.data.find((dest: Destination) => dest.slug === slug);
+    
+    if (!destination) {
+      return {
+        title: 'Destinasi Tidak Ditemukan - Explore Kaltara',
+      };
+    }
+
+    return {
+      title: `${destination.name} - Explore Kaltara`,
+      description: destination.description || `Jelajahi ${destination.name} di Kalimantan Utara`,
+    };
+  } catch (error) {
     return {
       title: 'Destinasi Tidak Ditemukan - Explore Kaltara',
     };
   }
-
-  return {
-    title: `${destination.name} - Explore Kaltara`,
-    description: destination.description,
-  };
 }
 
 export default async function DestinationPage({ params }: DestinationPageProps) {
-  const { slug } = await params;
-  const destination = destinations.find((dest) => dest.id === slug);
+  try {
+    const { slug } = await params;
+    const result = await PublicDataService.getDestinations();
+    const destination = result.data.find((dest: Destination) => dest.slug === slug);
 
-  if (!destination) {
-    notFound();
-  }
+    if (!destination) {
+      notFound();
+    }
 
   return (
     <div className="min-h-screen bg-white">
@@ -73,7 +89,7 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
       {/* Hero Image */}
       <div className="relative h-96 md:h-[500px]">
         <Image
-          src={destination.image}
+          src={destination.featured_image || (destination.images && destination.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg'}
           alt={destination.name}
           fill
           className="object-cover"
@@ -89,9 +105,9 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
               name: destination.name,
               type: 'destination',
               location: destination.location,
-              image: destination.image,
-              rating: destination.rating,
-              description: destination.description
+              image: destination.featured_image || (destination.images && destination.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg',
+              rating: destination.rating || 0,
+              description: destination.description || ''
             }}
             showText={true}
           />
@@ -99,7 +115,10 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
         
         <div className="absolute bottom-8 left-8 text-white">
           <div className="inline-block bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold mb-4">
-            {destination.category === 'alam' ? 'Wisata Alam' : 'Wisata Budaya'}
+            {destination.category === 'nature' ? 'Wisata Alam' : 
+             destination.category === 'culture' ? 'Wisata Budaya' :
+             destination.category === 'history' ? 'Wisata Sejarah' :
+             destination.category === 'adventure' ? 'Wisata Petualangan' : 'Wisata'}
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-2">{destination.name}</h1>
           <p className="text-xl text-gray-200 flex items-center">
@@ -126,16 +145,22 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
             <div className="mb-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Galeri Foto</h3>
               <div className="grid md:grid-cols-3 gap-4">
-                {destination.gallery.map((image, index) => (
-                  <div key={index} className="relative h-48 rounded-lg overflow-hidden">
-                    <Image
-                      src={image}
-                      alt={`${destination.name} ${index + 1}`}
-                      fill
-                      className="object-cover hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                ))}
+                {destination.images && destination.images.length > 0 ? 
+                  destination.images.map((image: string, index: number) => (
+                    <div key={index} className="relative h-48 rounded-lg overflow-hidden">
+                      <Image
+                        src={image}
+                        alt={`${destination.name} ${index + 1}`}
+                        fill
+                        className="object-cover hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                  )) : (
+                    <div className="col-span-3 text-center py-8 text-gray-500">
+                      Belum ada foto galeri tersedia
+                    </div>
+                  )
+                }
               </div>
             </div>
 
@@ -143,12 +168,18 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
             <div className="mb-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Fasilitas</h3>
               <div className="grid md:grid-cols-2 gap-4">
-                {destination.facilities.map((facility, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
-                    <span className="text-gray-800">{facility}</span>
-                  </div>
-                ))}
+                {destination.facilities && destination.facilities.length > 0 ? 
+                  destination.facilities.map((facility: string, index: number) => (
+                    <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
+                      <span className="text-gray-800">{facility}</span>
+                    </div>
+                  )) : (
+                    <div className="col-span-2 text-center py-8 text-gray-500">
+                      Informasi fasilitas belum tersedia
+                    </div>
+                  )
+                }
               </div>
             </div>
           </div>
@@ -163,20 +194,31 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
                   <span className="text-gray-600">Rating</span>
                   <div className="flex items-center">
                     <span className="text-yellow-500 mr-1">★</span>
-                    <span className="font-semibold">{destination.rating}/5</span>
+                    <span className="font-semibold">{destination.rating || 0}/5</span>
                   </div>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Harga Tiket</span>
-                  <span className="font-semibold text-emerald-600">{destination.ticketPrice}</span>
+                  <span className="text-gray-600">Kategori</span>
+                  <span className="font-semibold text-emerald-600 capitalize">
+                    {destination.price_range === 'free' ? 'Gratis' :
+                     destination.price_range === 'budget' ? 'Murah' :
+                     destination.price_range === 'mid-range' ? 'Sedang' :
+                     destination.price_range === 'expensive' ? 'Mahal' : 'Hubungi kami'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Jam Buka</span>
-                  <span className="font-semibold">{destination.openingHours}</span>
+                  <span className="font-semibold">
+                    {destination.opening_hours ? 
+                      (typeof destination.opening_hours === 'string' ? 
+                        destination.opening_hours : 
+                        'Cek info terbaru') : 
+                      '24 Jam'}
+                  </span>
                 </div>
                 <div className="border-t pt-4">
-                  <span className="text-gray-600 block mb-2">Waktu Terbaik Berkunjung</span>
-                  <span className="text-sm text-gray-800">{destination.bestTimeToVisit}</span>
+                  <span className="text-gray-600 block mb-2">Kota</span>
+                  <span className="text-sm text-gray-800">{destination.city}</span>
                 </div>
               </div>
             </div>
@@ -184,25 +226,35 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
             {/* Weather Widget */}
             <div className="mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Cuaca Terkini</h3>
-              <WeatherWidget location={destination.location} />
+              <WeatherWidget location={destination.city} />
             </div>
 
             {/* Map Placeholder */}
             <div className="bg-gray-100 rounded-2xl p-6 mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Lokasi</h3>
-              <Map
-                center={[destination.coordinates.lat, destination.coordinates.lng]}
-                zoom={13}
-                markers={[{
-                  position: [destination.coordinates.lat, destination.coordinates.lng],
-                  title: destination.name,
-                  description: destination.location,
-                  link: `#`
-                }]}
-                height="300px"
-              />
+              {destination.latitude && destination.longitude ? (
+                <Map
+                  center={[destination.latitude, destination.longitude]}
+                  zoom={13}
+                  markers={[{
+                    position: [destination.latitude, destination.longitude],
+                    title: destination.name,
+                    description: destination.location,
+                    link: `#`
+                  }]}
+                  height="300px"
+                />
+              ) : (
+                <div className="h-72 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-500">Lokasi peta tidak tersedia</span>
+                </div>
+              )}
               <div className="mt-3 text-sm text-gray-600">
-                <p>📍 Koordinat: {destination.coordinates.lat}, {destination.coordinates.lng}</p>
+                {destination.latitude && destination.longitude ? (
+                  <p>📍 Koordinat: {destination.latitude}, {destination.longitude}</p>
+                ) : (
+                  <p>📍 {destination.location}</p>
+                )}
               </div>
             </div>
 
@@ -225,37 +277,24 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
       {/* Related Destinations */}
       <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Destinasi Lainnya di {destination.location}</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Destinasi Lainnya di {destination.city}</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            {destinations
-              .filter(dest => dest.location === destination.location && dest.id !== destination.id)
-              .slice(0, 3)
-              .map((relatedDest) => (
-                <Link key={relatedDest.id} href={`/destinations/${relatedDest.id}`} className="group">
-                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                    <div className="relative h-48">
-                      <Image
-                        src={relatedDest.image}
-                        alt={relatedDest.name}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                        <span className="text-yellow-500">★</span>
-                        <span className="ml-1 font-semibold">{relatedDest.rating}</span>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="text-emerald-600 text-sm font-semibold mb-2">{relatedDest.location}</div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-3">{relatedDest.name}</h3>
-                      <p className="text-gray-600 leading-relaxed line-clamp-3">{relatedDest.description}</p>
-                    </div>
-                  </div>
+            {/* For now, we'll show a placeholder since we need to fetch related destinations */}
+            <div className="text-center py-8 col-span-3">
+              <div className="text-gray-500">
+                <p>Destinasi terkait akan ditampilkan di sini</p>
+                <Link href="/destinations" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+                  Lihat Semua Destinasi →
                 </Link>
-              ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </div>
   );
+  } catch (error) {
+    console.error('Error loading destination:', error);
+    notFound();
+  }
 }

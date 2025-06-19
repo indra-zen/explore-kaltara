@@ -1036,13 +1036,15 @@ export class AdminService {
         `Bulk approved ${reviewIds.length} reviews`,
         { approved_review_ids: reviewIds }
       );
-
+ 
       return data;
     } catch (error) {
       console.error('Error bulk approving reviews:', error);
       throw error;
     }
-  }  // Log admin activity
+  }
+
+  // Log admin activity
   static async logActivity(
     action: string,
     entityType: string,

@@ -7,7 +7,8 @@ import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
 import { SkeletonGrid } from '@/components/SkeletonCards';
 import { SectionLoading } from '@/components/LoadingState';
-import hotels from '@/data/hotels.json';
+import { PublicDataService } from '@/lib/supabase/public-service';
+import type { Hotel } from '@/lib/supabase/types';
 
 export default function HotelsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,51 +18,67 @@ export default function HotelsPage() {
   const [maxPrice, setMaxPrice] = useState(2000000);
   const [isLoading, setIsLoading] = useState(true);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [dataSource, setDataSource] = useState<'database' | 'fallback'>('database');
+  const [error, setError] = useState<string | null>(null);
 
-  // Get unique locations and categories
-  const locations = [...new Set(hotels.map(h => h.location))];
-  const categories = [...new Set(hotels.map(h => h.category))];
-
-  // Simulate initial loading
+  // Load hotels data
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
+    const loadHotels = async () => {
+      try {
+        setIsLoading(true);
+        const result = await PublicDataService.getHotels();
+        setHotels(result.data);
+        setDataSource(result.fromFallback ? 'fallback' : 'database');
+        setError(null);
+      } catch (err) {
+        console.error('Error loading hotels:', err);
+        setError('Failed to load hotels');
+        setHotels([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadHotels();
   }, []);
 
-  // Extract price range for filtering
-  const getPriceRange = (priceRange: string) => {
-    const prices = priceRange.match(/IDR ([\d,]+)/g)?.map(p => 
-      parseInt(p.replace(/IDR |,/g, ''))
-    ) || [0];
-    return Math.max(...prices);
+  // Get unique locations and categories
+  const locations = [...new Set(hotels.map(h => h.city))];
+  const categories = ['1', '2', '3', '4', '5']; // Star ratings as categories
+
+  // Extract price for filtering
+  const getHotelPrice = (hotel: Hotel) => {
+    return hotel.price_per_night || 0;
   };
 
   // Filtered hotels with loading states
   const filteredHotels = useMemo(() => {
-    setIsFiltering(true);
-    
     const filtered = hotels.filter(hotel => {
       const matchesSearch = hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           hotel.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (hotel.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                            hotel.location.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesLocation = selectedLocation === 'all' || hotel.location === selectedLocation;
-      const matchesCategory = selectedCategory === 'all' || hotel.category === selectedCategory;
-      const matchesRating = hotel.rating >= minRating;
-      const hotelMaxPrice = getPriceRange(hotel.priceRange);
-      const matchesPrice = hotelMaxPrice <= maxPrice;
+      const matchesLocation = selectedLocation === 'all' || hotel.city === selectedLocation;
+      const matchesCategory = selectedCategory === 'all' || (hotel.star_rating?.toString() === selectedCategory);
+      const matchesRating = (hotel.rating || 0) >= minRating;
+      const hotelPrice = getHotelPrice(hotel);
+      const matchesPrice = hotelPrice <= maxPrice;
 
       return matchesSearch && matchesLocation && matchesCategory && matchesRating && matchesPrice;
     });
 
-    // Simulate filtering delay
+    return filtered;
+  }, [searchQuery, selectedLocation, selectedCategory, minRating, maxPrice, hotels]);
+
+  // Handle filtering state updates
+  useEffect(() => {
+    setIsFiltering(true);
     const timer = setTimeout(() => {
       setIsFiltering(false);
     }, 300);
 
-    return filtered;
+    return () => clearTimeout(timer);
   }, [searchQuery, selectedLocation, selectedCategory, minRating, maxPrice]);
 
   const formatPrice = (price: number) => {
@@ -117,16 +134,16 @@ export default function HotelsPage() {
 
               {/* Category Filter */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rating Bintang</label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 >
-                  <option value="all">Semua Kategori</option>
+                  <option value="all">Semua Rating</option>
                   {categories.map(category => (
                     <option key={category} value={category}>
-                      {category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      {category} Bintang
                     </option>
                   ))}
                 </select>
@@ -192,8 +209,19 @@ export default function HotelsPage() {
 
           {/* Hotels Grid */}
           <div className="lg:col-span-3">
+            {/* Data Source Indicator */}
+            <div className="mb-4 text-sm text-gray-600">
+              Data dari: {dataSource === 'database' ? '🗄️ Database' : '📄 File Fallback'}
+            </div>
+
             {isLoading ? (
               <SkeletonGrid type="hotel" count={6} />
+            ) : error ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Hotels</h3>
+                <p className="text-gray-600">{error}</p>
+              </div>
             ) : isFiltering ? (
               <SectionLoading message="Memfilter hotel..." />
             ) : filteredHotels.length === 0 ? (
@@ -207,9 +235,9 @@ export default function HotelsPage() {
                 {filteredHotels.map((hotel) => (
                   <div key={hotel.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
                     <div className="relative h-48 overflow-hidden">
-                      <Link href={`/hotels/${hotel.id}`}>
+                      <Link href={`/hotels/${hotel.slug}`}>
                         <Image
-                          src={hotel.image}
+                          src={hotel.featured_image || (hotel.images && hotel.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg'}
                           alt={hotel.name}
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-300"
@@ -220,11 +248,11 @@ export default function HotelsPage() {
                       </Link>
                       <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
                         <span className="text-yellow-500">★</span>
-                        <span className="ml-1 font-semibold">{hotel.rating}</span>
+                        <span className="ml-1 font-semibold">{hotel.rating || 0}</span>
                       </div>
                       <div className="absolute top-4 left-4">
                         <span className="bg-emerald-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                          {hotel.category.replace('-', ' ').toUpperCase()}
+                          {hotel.star_rating ? `${hotel.star_rating} STAR` : 'HOTEL'}
                         </span>
                       </div>
                       <div className="absolute bottom-4 right-4">
@@ -234,10 +262,10 @@ export default function HotelsPage() {
                             name: hotel.name,
                             type: 'hotel',
                             location: hotel.location,
-                            image: hotel.image,
-                            rating: hotel.rating,
-                            description: hotel.description,
-                            priceRange: hotel.priceRange
+                            image: hotel.featured_image || (hotel.images && hotel.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg',
+                            rating: hotel.rating || 0,
+                            description: hotel.description || '',
+                            priceRange: hotel.price_per_night ? `IDR ${hotel.price_per_night.toLocaleString()}` : 'Contact for price'
                           }}
                         />
                       </div>
@@ -246,28 +274,32 @@ export default function HotelsPage() {
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">{hotel.name}</h3>
-                          <p className="text-emerald-600 text-sm font-semibold">{hotel.location}</p>
+                          <p className="text-emerald-600 text-sm font-semibold">{hotel.city}</p>
                         </div>
                       </div>
                       
-                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">{hotel.description}</p>
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">
+                        {hotel.description || 'Hotel yang nyaman untuk menginap.'}
+                      </p>
                       
                       {/* Amenities Icons */}
                       <div className="flex gap-2 mb-3">
-                        {hotel.amenities.wifi && <span className="text-xs">📶</span>}
-                        {hotel.amenities.pool && <span className="text-xs">🏊</span>}
-                        {hotel.amenities.gym && <span className="text-xs">💪</span>}
-                        {hotel.amenities.restaurant && <span className="text-xs">🍽️</span>}
-                        {hotel.amenities.parking && <span className="text-xs">🅿️</span>}
+                        {hotel.amenities && hotel.amenities.includes('WiFi') && <span className="text-xs">📶</span>}
+                        {hotel.amenities && hotel.amenities.includes('Pool') && <span className="text-xs">🏊</span>}
+                        {hotel.amenities && hotel.amenities.includes('Gym') && <span className="text-xs">💪</span>}
+                        {hotel.amenities && hotel.amenities.includes('Restaurant') && <span className="text-xs">🍽️</span>}
+                        {hotel.amenities && hotel.amenities.includes('Parking') && <span className="text-xs">🅿️</span>}
                       </div>
 
                       <div className="flex justify-between items-center">
                         <div>
-                          <span className="text-emerald-600 font-bold">{hotel.priceRange.split(' - ')[0]}</span>
+                          <span className="text-emerald-600 font-bold">
+                            {hotel.price_per_night ? `IDR ${hotel.price_per_night.toLocaleString()}` : 'Hubungi untuk harga'}
+                          </span>
                           <span className="text-gray-500 text-xs block">per malam</span>
                         </div>
                         <Link 
-                          href={`/hotels/${hotel.id}`}
+                          href={`/hotels/${hotel.slug}`}
                           className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors"
                         >
                           Lihat Detail →

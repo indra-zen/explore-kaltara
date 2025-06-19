@@ -53,8 +53,6 @@ export default function DestinationsPage() {
 
   // Filtered destinations with debounced filtering
   const filteredDestinations = useMemo(() => {
-    setIsFiltering(true);
-    
     const filtered = destinations.filter(destination => {
       const matchesSearch = destination.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            (destination.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -67,13 +65,18 @@ export default function DestinationsPage() {
       return matchesSearch && matchesLocation && matchesCategory && matchesRating;
     });
 
-    // Simulate filtering delay for better UX
+    return filtered;
+  }, [searchQuery, selectedLocation, selectedCategory, minRating, destinations]);
+
+  // Handle filtering state updates
+  useEffect(() => {
+    setIsFiltering(true);
     const timer = setTimeout(() => {
       setIsFiltering(false);
     }, 300);
 
-    return filtered;
-  }, [searchQuery, selectedLocation, selectedCategory, minRating, destinations]);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedLocation, selectedCategory, minRating]);
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import hotels from '@/data/hotels.json';
+import { PublicDataService } from '@/lib/supabase/public-service';
+import type { Hotel } from '@/lib/supabase/types';
 import Map from '@/components/Map';
 import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
@@ -12,34 +13,49 @@ interface HotelPageProps {
 }
 
 export async function generateStaticParams() {
-  return hotels.map((hotel) => ({
-    slug: hotel.id,
-  }));
+  try {
+    const result = await PublicDataService.getHotels();
+    return result.data.map((hotel: Hotel) => ({
+      slug: hotel.slug,
+    }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: HotelPageProps) {
-  const { slug } = await params;
-  const hotel = hotels.find((h) => h.id === slug);
-  
-  if (!hotel) {
+  try {
+    const { slug } = await params;
+    const result = await PublicDataService.getHotels();
+    const hotel = result.data.find((h: Hotel) => h.slug === slug);
+    
+    if (!hotel) {
+      return {
+        title: 'Hotel Tidak Ditemukan - Explore Kaltara',
+      };
+    }
+
+    return {
+      title: `${hotel.name} - Explore Kaltara`,
+      description: hotel.description || `Menginap di ${hotel.name} di Kalimantan Utara`,
+    };
+  } catch (error) {
     return {
       title: 'Hotel Tidak Ditemukan - Explore Kaltara',
     };
   }
-
-  return {
-    title: `${hotel.name} - Explore Kaltara`,
-    description: hotel.description,
-  };
 }
 
 export default async function HotelPage({ params }: HotelPageProps) {
-  const { slug } = await params;
-  const hotel = hotels.find((h) => h.id === slug);
+  try {
+    const { slug } = await params;
+    const result = await PublicDataService.getHotels();
+    const hotel = result.data.find((h: Hotel) => h.slug === slug);
 
-  if (!hotel) {
-    notFound();
-  }
+    if (!hotel) {
+      notFound();
+    }
 
   return (
     <div className="min-h-screen bg-white">
@@ -73,7 +89,7 @@ export default async function HotelPage({ params }: HotelPageProps) {
       {/* Hero Image */}
       <div className="relative h-96 md:h-[500px]">
         <Image
-          src={hotel.image}
+          src={hotel.featured_image || (hotel.images && hotel.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg'}
           alt={hotel.name}
           fill
           className="object-cover"
@@ -89,10 +105,10 @@ export default async function HotelPage({ params }: HotelPageProps) {
               name: hotel.name,
               type: 'hotel',
               location: hotel.location,
-              image: hotel.image,
-              rating: hotel.rating,
-              description: hotel.description,
-              priceRange: hotel.priceRange
+              image: hotel.featured_image || (hotel.images && hotel.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg',
+              rating: hotel.rating || 0,
+              description: hotel.description || '',
+              priceRange: hotel.price_per_night ? `IDR ${hotel.price_per_night.toLocaleString()}` : 'Contact for price'
             }}
             showText={true}
           />
@@ -100,7 +116,7 @@ export default async function HotelPage({ params }: HotelPageProps) {
         
         <div className="absolute bottom-8 left-8 text-white">
           <div className="inline-block bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold mb-4">
-            {hotel.category.replace('-', ' ').toUpperCase()}
+            {hotel.star_rating ? `${hotel.star_rating} STAR HOTEL` : 'HOTEL'}
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-2">{hotel.name}</h1>
           <p className="text-xl text-gray-200 flex items-center">
@@ -120,22 +136,24 @@ export default async function HotelPage({ params }: HotelPageProps) {
             {/* Description */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-3xl font-bold text-gray-900">Tentang Hotel</h2>
-                <div className="flex items-center bg-emerald-100 px-4 py-2 rounded-full">
-                  <span className="text-yellow-500 text-lg mr-1">★</span>
-                  <span className="font-bold text-emerald-800">{hotel.rating}</span>
-                  <span className="text-gray-600 ml-1">({hotel.reviewCount} ulasan)</span>
-                </div>
+                <h2 className="text-3xl font-bold text-gray-900">Tentang Hotel</h2>              <div className="flex items-center bg-emerald-100 px-4 py-2 rounded-full">
+                <span className="text-yellow-500 text-lg mr-1">★</span>
+                <span className="font-bold text-emerald-800">{hotel.rating || 0}</span>
+                <span className="text-gray-600 ml-1">({hotel.review_count || 0} ulasan)</span>
               </div>
-              <p className="text-lg text-gray-700 leading-relaxed mb-4">{hotel.description}</p>
-              <p className="text-gray-600">📍 {hotel.address}</p>
             </div>
+            <p className="text-lg text-gray-700 leading-relaxed mb-4">
+              {hotel.description || 'Hotel yang nyaman untuk menginap di Kalimantan Utara.'}
+            </p>
+            <p className="text-gray-600">📍 {hotel.location}</p>
+          </div>
 
-            {/* Gallery */}
-            <div className="mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Galeri Foto</h3>
-              <div className="grid md:grid-cols-3 gap-4">
-                {hotel.gallery.map((image: string, index: number) => (
+          {/* Gallery */}
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">Galeri Foto</h3>
+            <div className="grid md:grid-cols-3 gap-4">
+              {hotel.images && hotel.images.length > 0 ? 
+                hotel.images.map((image: string, index: number) => (
                   <div key={index} className="relative h-48 rounded-lg overflow-hidden">
                     <Image
                       src={image}
@@ -144,22 +162,33 @@ export default async function HotelPage({ params }: HotelPageProps) {
                       className="object-cover hover:scale-110 transition-transform duration-300"
                     />
                   </div>
-                ))}
-              </div>
+                )) : (
+                  <div className="col-span-3 text-center py-8 text-gray-500">
+                    Galeri foto belum tersedia
+                  </div>
+                )
+              }
             </div>
+          </div>
 
-            {/* Facilities */}
-            <div className="mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Fasilitas Hotel</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                {hotel.facilities.map((facility: string, index: number) => (
+          {/* Facilities */}
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">Fasilitas Hotel</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              {hotel.amenities && hotel.amenities.length > 0 ? 
+                hotel.amenities.map((amenity: string, index: number) => (
                   <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
-                    <span className="text-gray-800">{facility}</span>
+                    <span className="text-gray-800">{amenity}</span>
                   </div>
-                ))}
-              </div>
+                )) : (
+                  <div className="col-span-2 text-center py-8 text-gray-500">
+                    Informasi fasilitas belum tersedia
+                  </div>
+                )
+              }
             </div>
+          </div>
 
             {/* Amenities Icons */}
             <div className="mb-8">
@@ -258,44 +287,24 @@ export default async function HotelPage({ params }: HotelPageProps) {
       {/* Related Hotels */}
       <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Hotel Lainnya di {hotel.location}</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Hotel Lainnya di {hotel.city}</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            {hotels
-              .filter(h => h.location === hotel.location && h.id !== hotel.id)
-              .slice(0, 3)
-              .map((relatedHotel) => (
-                <Link key={relatedHotel.id} href={`/hotels/${relatedHotel.id}`} className="group">
-                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                    <div className="relative h-48">
-                      <Image
-                        src={relatedHotel.image}
-                        alt={relatedHotel.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">{relatedHotel.name}</h3>
-                          <p className="text-emerald-600 text-sm">{relatedHotel.location}</p>
-                        </div>
-                        <div className="flex items-center bg-emerald-100 px-2 py-1 rounded-full">
-                          <span className="text-yellow-500 text-sm">★</span>
-                          <span className="ml-1 text-sm font-semibold text-emerald-800">{relatedHotel.rating}</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-emerald-600 font-bold">{relatedHotel.priceRange.split(' - ')[0]}</span>
-                        <span className="text-gray-500 text-sm">per malam</span>
-                      </div>
-                    </div>
-                  </div>
+            {/* For now, we'll show a placeholder since we need to fetch related hotels */}
+            <div className="text-center py-8 col-span-3">
+              <div className="text-gray-500">
+                <p>Hotel terkait akan ditampilkan di sini</p>
+                <Link href="/hotels" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+                  Lihat Semua Hotel →
                 </Link>
-              ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </div>
   );
+  } catch (error) {
+    console.error('Error loading hotel:', error);
+    notFound();
+  }
 }
