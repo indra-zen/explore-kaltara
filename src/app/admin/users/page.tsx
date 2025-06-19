@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminService from '@/lib/supabase/admin-service';
 import { UserModal, ConfirmDialog, Toast } from '@/components/admin/AdminModals';
-import { 
+import {
   Search,
   Filter,
   MoreVertical,
@@ -36,14 +36,14 @@ interface User {
 export default function UsersPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'user' | 'admin' | 'moderator'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
-  
+
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -97,7 +97,14 @@ export default function UsersPage() {
       setLoading(true);
       setError(null);
       const result = await AdminService.getUsers();
-      setUsers(result.data || []);
+      console.log('Fetched users:', result.data);
+      // Dynamically assign is_admin based on email
+      const adminEmails = ['admin@explorekaltara.com', 'demo@admin.com'];
+      const usersWithRole = (result.data || []).map(u => ({
+        ...u,
+        is_admin: adminEmails.includes(u.email)
+      }));
+      setUsers(usersWithRole);
     } catch (err) {
       console.error('Error fetching users:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
@@ -112,18 +119,28 @@ export default function UsersPage() {
     }
   };
 
+  // const filteredUsers = users.filter(user => {
+  //   const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //                        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  //   const matchesRole = filterRole === 'all' || 
+  //                      (filterRole === 'admin' && user.is_admin) ||
+  //                      (filterRole === 'user' && !user.is_admin);
+  //   return matchesSearch && matchesRole;
+  // });
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || 
-                       (filterRole === 'admin' && user.is_admin) ||
-                       (filterRole === 'user' && !user.is_admin);
+    const name = user.name || '';
+    const email = user.email || '';
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === 'all' ||
+      (filterRole === 'admin' && user.is_admin) ||
+      (filterRole === 'user' && !user.is_admin);
     return matchesSearch && matchesRole;
   });
 
   const handleSelectUser = (userId: string) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
+    setSelectedUsers(prev =>
+      prev.includes(userId)
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
@@ -155,7 +172,7 @@ export default function UsersPage() {
   const handleSaveUser = async (userData: any) => {
     try {
       setActionLoading(true);
-      
+
       if (currentUser) {
         // Update existing user
         const updatedUser = await AdminService.updateUserProfile(currentUser.id, userData);
@@ -167,14 +184,14 @@ export default function UsersPage() {
         setUsers(prev => [...prev, newUser]);
         setToast({ message: 'User created successfully!', variant: 'success' });
       }
-      
+
       setShowUserModal(false);
       setCurrentUser(null);
     } catch (error) {
       console.error('Error saving user:', error);
-      setToast({ 
-        message: error instanceof Error ? error.message : 'Failed to save user', 
-        variant: 'error' 
+      setToast({
+        message: error instanceof Error ? error.message : 'Failed to save user',
+        variant: 'error'
       });
     } finally {
       setActionLoading(false);
@@ -183,7 +200,7 @@ export default function UsersPage() {
 
   const confirmDeleteUser = async () => {
     if (!currentUser) return;
-    
+
     try {
       setActionLoading(true);
       await AdminService.deleteUser(currentUser.id);
@@ -193,9 +210,9 @@ export default function UsersPage() {
       setCurrentUser(null);
     } catch (error) {
       console.error('Error deleting user:', error);
-      setToast({ 
-        message: error instanceof Error ? error.message : 'Failed to delete user', 
-        variant: 'error' 
+      setToast({
+        message: error instanceof Error ? error.message : 'Failed to delete user',
+        variant: 'error'
       });
     } finally {
       setActionLoading(false);
@@ -211,9 +228,9 @@ export default function UsersPage() {
       setToast({ message: `${selectedUsers.length} users deleted successfully!`, variant: 'success' });
     } catch (error) {
       console.error('Error bulk deleting users:', error);
-      setToast({ 
-        message: error instanceof Error ? error.message : 'Failed to delete users', 
-        variant: 'error' 
+      setToast({
+        message: error instanceof Error ? error.message : 'Failed to delete users',
+        variant: 'error'
       });
     } finally {
       setActionLoading(false);
@@ -250,7 +267,7 @@ export default function UsersPage() {
               <Download className="w-4 h-4 mr-2" />
               Export
             </button>
-            <button 
+            <button
               onClick={handleCreateUser}
               className="flex items-center px-4 py-2 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
             >
@@ -264,7 +281,7 @@ export default function UsersPage() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-600">{error}</p>
-            <button 
+            <button
               onClick={loadUsers}
               className="mt-2 text-red-700 hover:text-red-800 font-medium"
             >
@@ -314,7 +331,7 @@ export default function UsersPage() {
                   <span className="text-sm text-gray-600">
                     {selectedUsers.length} selected
                   </span>
-                  <button 
+                  <button
                     onClick={handleBulkDelete}
                     className="text-red-600 hover:text-red-700 text-sm font-medium"
                   >
@@ -336,7 +353,7 @@ export default function UsersPage() {
                 {searchTerm ? 'No users found matching your search.' : 'No users found.'}
               </p>
               {!searchTerm && (
-                <button 
+                <button
                   onClick={handleCreateUser}
                   className="mt-4 text-emerald-600 hover:text-emerald-700 font-medium"
                 >
@@ -403,9 +420,8 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          userItem.is_admin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userItem.is_admin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
                           {userItem.is_admin ? 'Admin' : 'User'}
                         </span>
                       </td>
@@ -418,14 +434,14 @@ export default function UsersPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
-                          <button 
+                          <button
                             onClick={() => handleEditUser(userItem)}
                             className="text-blue-600 hover:text-blue-700"
                             title="Edit User"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDeleteUser(userItem)}
                             className="text-red-600 hover:text-red-700"
                             title="Delete User"
