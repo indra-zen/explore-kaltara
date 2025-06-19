@@ -1,23 +1,48 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
-import destinations from '@/data/destinations.json';
-import hotels from '@/data/hotels.json';
+import { PublicDataService } from '@/lib/supabase/public-service';
+import type { Destination, Hotel } from '@/lib/supabase/types';
 
 export default function Home() {
-  // Get featured destinations from JSON data
-  const featuredDestinations = [
-    destinations.find(d => d.id === "taman-nasional-kayan-mentarang"),
-    destinations.find(d => d.id === "hutan-mangrove-bekantan-tarakan"), 
-    destinations.find(d => d.id === "air-terjun-tujuh-tingkat")
-  ].filter((dest): dest is NonNullable<typeof dest> => dest !== undefined);
+  const [featuredDestinations, setFeaturedDestinations] = useState<Destination[]>([]);
+  const [featuredHotels, setFeaturedHotels] = useState<Hotel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<'database' | 'fallback'>('database');
 
-  // Get featured hotels from JSON data  
-  const featuredHotels = [
-    hotels.find(h => h.id === "swiss-belhotel-tarakan"),
-    hotels.find(h => h.id === "luminor-hotel-tanjung-selor"),
-    hotels.find(h => h.id === "hotel-dcalia-malinau")
-  ].filter((hotel): hotel is NonNullable<typeof hotel> => hotel !== undefined);
+  // Load featured data from database
+  useEffect(() => {
+    const loadFeaturedData = async () => {
+      setIsLoading(true);
+      try {
+        // Load featured destinations and hotels in parallel
+        const [destinationsResult, hotelsResult] = await Promise.all([
+          PublicDataService.getFeaturedDestinations(3),
+          PublicDataService.getFeaturedHotels(3)
+        ]);
+
+        setFeaturedDestinations(destinationsResult.data || []);
+        setFeaturedHotels(hotelsResult.data || []);
+        
+        // Set data source based on either result using fallback
+        setDataSource(
+          destinationsResult.fromFallback || hotelsResult.fromFallback ? 'fallback' : 'database'
+        );
+      } catch (error) {
+        console.error('Error loading featured data:', error);
+        setFeaturedDestinations([]);
+        setFeaturedHotels([]);
+        setDataSource('fallback');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFeaturedData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
@@ -27,8 +52,8 @@ export default function Home() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop"
-            alt="Kalimantan Utara Nature"
+            src="/images/hutan-mangrove-bekantan-1.jpg"
+            alt="Hutan Mangrove Kalimantan Utara"
             fill
             className="object-cover"
             priority
@@ -43,14 +68,48 @@ export default function Home() {
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-gray-200 max-w-2xl mx-auto">
             Temukan pesona alam liar, budaya Dayak yang kaya, dan pengalaman tak terlupakan di ujung utara Borneo
-          </p>            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/destinations" className="bg-emerald-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-emerald-700 transition-all transform hover:scale-105">
-                Mulai Petualangan
-              </Link>
-              <button className="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-gray-900 transition-all">
-                Lihat Video
-              </button>
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/destinations" className="bg-emerald-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-emerald-700 transition-all transform hover:scale-105">
+              Mulai Petualangan
+            </Link>
+            <Link href="/map" className="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-gray-900 transition-all">
+              Jelajahi Peta
+            </Link>
             </div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+          <div className="animate-bounce">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Stats Banner */}
+      <section className="py-12 bg-emerald-600">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
+            <div className="group hover:scale-105 transition-transform">
+              <div className="text-3xl md:text-4xl font-bold mb-2">{featuredDestinations.length + 5}+</div>
+              <div className="text-emerald-100 text-sm md:text-base">Destinasi Wisata</div>
+            </div>
+            <div className="group hover:scale-105 transition-transform">
+              <div className="text-3xl md:text-4xl font-bold mb-2">{featuredHotels.length + 7}+</div>
+              <div className="text-emerald-100 text-sm md:text-base">Hotel & Penginapan</div>
+            </div>
+            <div className="group hover:scale-105 transition-transform">
+              <div className="text-3xl md:text-4xl font-bold mb-2">5</div>
+              <div className="text-emerald-100 text-sm md:text-base">Kabupaten/Kota</div>
+            </div>
+            <div className="group hover:scale-105 transition-transform">
+              <div className="text-3xl md:text-4xl font-bold mb-2">4.5★</div>
+              <div className="text-emerald-100 text-sm md:text-base">Rating Rata-rata</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -58,27 +117,50 @@ export default function Home() {
       <section id="destinations" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
+            <span className="inline-block bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              🏞️ DESTINASI TERPOPULER
+            </span>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Destinasi Unggulan
+              Jelajahi Keajaiban Alam
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
-              Jelajahi keindahan alam dan budaya Kalimantan Utara yang menakjubkan
+              Dari hutan mangrove hingga air terjun spektakuler, temukan destinasi yang akan membuat perjalanan Anda tak terlupakan
             </p>
-            <Link href="/destinations" className="inline-flex items-center bg-emerald-600 text-white px-6 py-3 rounded-full hover:bg-emerald-700 transition-colors">
+            {dataSource === 'fallback' && (
+              <div className="mb-4 inline-flex items-center bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm">
+                <span className="mr-2">📋</span>
+                Data dari file lokal (database tidak tersedia)
+              </div>
+            )}
+            <Link href="/destinations" className="inline-flex items-center bg-emerald-600 text-white px-6 py-3 rounded-full hover:bg-emerald-700 transition-colors group">
               Lihat Semua Destinasi
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredDestinations.map((destination, index) => (
-              <Link key={index} href={`/destinations/${destination.id}`} className="group">
+          {isLoading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse">
+                  <div className="h-64 bg-gray-300"></div>
+                  <div className="p-6">
+                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-6 bg-gray-300 rounded mb-3"></div>
+                    <div className="h-16 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredDestinations.map((destination, index) => (
+              <Link key={index} href={`/destinations/${destination.slug}`} className="group">
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                   <div className="relative h-64 overflow-hidden">
                     <Image
-                      src={destination.image}
+                      src={destination.featured_image || destination.images?.[0] || '/images/placeholder.jpg'}
                       alt={destination.name}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-300"
@@ -99,7 +181,8 @@ export default function Home() {
                 </div>
               </Link>
             ))}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -107,27 +190,44 @@ export default function Home() {
       <section id="hotels" className="py-20 bg-emerald-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
+            <span className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              🏨 AKOMODASI TERBAIK
+            </span>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Hotel Terbaik
+              Menginap dengan Nyaman
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
-              Nikmati kenyamanan menginap di hotel-hotel pilihan terbaik
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              Pilihan hotel dan penginapan terbaik dengan fasilitas lengkap dan lokasi strategis di seluruh Kalimantan Utara
             </p>
-            <Link href="/hotels" className="inline-flex items-center bg-emerald-600 text-white px-6 py-3 rounded-full hover:bg-emerald-700 transition-colors">
+            <Link href="/hotels" className="inline-flex items-center bg-emerald-600 text-white px-6 py-3 rounded-full hover:bg-emerald-700 transition-colors group">
               Lihat Semua Hotel
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredHotels.map((hotel, index) => (
-              <Link key={index} href={`/hotels/${hotel.id}`} className="group">
+          {isLoading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse">
+                  <div className="h-48 bg-gray-300"></div>
+                  <div className="p-6">
+                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-6 bg-gray-300 rounded mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredHotels.map((hotel, index) => (
+              <Link key={index} href={`/hotels/${hotel.slug}`} className="group">
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
                   <div className="relative h-48">
                     <Image
-                      src={hotel.image}
+                      src={hotel.featured_image || hotel.images?.[0] || '/images/placeholder.jpg'}
                       alt={hotel.name}
                       fill
                       className="object-cover"
@@ -145,7 +245,9 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-emerald-600 font-bold">{hotel.priceRange.split(' - ')[0]}</span>
+                      <span className="text-emerald-600 font-bold">
+                        {hotel.price_per_night ? `IDR ${hotel.price_per_night.toLocaleString('id-ID')}` : 'Harga Bervariasi'}
+                      </span>
                       <div className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
                         Lihat Detail
                       </div>
@@ -154,7 +256,8 @@ export default function Home() {
                 </div>
               </Link>
             ))}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -197,41 +300,17 @@ export default function Home() {
                   <span className="text-gray-700">Museum Rumah Bundar</span>
                 </div>
               </div>
-              <button className="mt-8 bg-emerald-600 text-white px-8 py-3 rounded-full hover:bg-emerald-700 transition-colors">
+              <Link href="/destinations?category=budaya" className="mt-8 bg-emerald-600 text-white px-8 py-3 rounded-full hover:bg-emerald-700 transition-colors">
                 Jelajahi Budaya
-              </button>
+              </Link>
             </div>
             <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=600&h=500&fit=crop"
-                alt="Budaya Dayak"
+                src="/images/hutan-mangrove-bekantan-2.jpg"
+                alt="Budaya Dayak Kalimantan Utara"
                 fill
                 className="object-cover"
               />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 bg-emerald-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
-            <div>
-              <div className="text-4xl md:text-5xl font-bold mb-2">25+</div>
-              <div className="text-emerald-100">Destinasi Wisata</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold mb-2">50+</div>
-              <div className="text-emerald-100">Hotel & Penginapan</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold mb-2">5</div>
-              <div className="text-emerald-100">Kabupaten/Kota</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold mb-2">4.5★</div>
-              <div className="text-emerald-100">Rating Rata-rata</div>
             </div>
           </div>
         </div>
@@ -435,12 +514,12 @@ export default function Home() {
             Dapatkan panduan lengkap dan penawaran terbaik untuk liburan impian Anda di Kalimantan Utara
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-emerald-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-emerald-700 transition-all transform hover:scale-105">
+            <Link href="/trip-planner" className="bg-emerald-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-emerald-700 transition-all transform hover:scale-105">
               Rencanakan Trip
-            </button>
-            <button className="border-2 border-emerald-400 text-emerald-400 px-8 py-4 rounded-full text-lg font-semibold hover:bg-emerald-400 hover:text-gray-900 transition-all">
-              Hubungi Kami
-            </button>
+            </Link>
+            <Link href="/profile" className="border-2 border-emerald-400 text-emerald-400 px-8 py-4 rounded-full text-lg font-semibold hover:bg-emerald-400 hover:text-gray-900 transition-all">
+              Buat Akun Gratis
+            </Link>
           </div>
         </div>
       </section>

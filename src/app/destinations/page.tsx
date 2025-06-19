@@ -7,7 +7,8 @@ import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
 import { SkeletonGrid } from '@/components/SkeletonCards';
 import { SectionLoading } from '@/components/LoadingState';
-import destinations from '@/data/destinations.json';
+import { PublicDataService } from '@/lib/supabase/public-service';
+import type { Destination } from '@/lib/supabase/types';
 
 export default function DestinationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,18 +17,39 @@ export default function DestinationsPage() {
   const [minRating, setMinRating] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [dataSource, setDataSource] = useState<'database' | 'fallback'>('database');
+
+  // Load destinations from database
+  useEffect(() => {
+    const loadDestinations = async () => {
+      setIsLoading(true);
+      try {
+        const { data, fromFallback } = await PublicDataService.getDestinations();
+        setDestinations(data || []);
+        setDataSource(fromFallback ? 'fallback' : 'database');
+      } catch (error) {
+        console.error('Error loading destinations:', error);
+        setDestinations([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDestinations();
+  }, []);
 
   // Get unique locations and categories
-  const locations = [...new Set(destinations.map(d => d.location))];
+  const locations = [...new Set(destinations.map(d => d.location || d.city))];
   const categories = [...new Set(destinations.map(d => d.category))];
 
-  // Simulate initial loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Simulate initial loading (removed since we're loading from database)
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setIsLoading(false);
+  //   }, 1000);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   // Filtered destinations with debounced filtering
   const filteredDestinations = useMemo(() => {
@@ -35,12 +57,12 @@ export default function DestinationsPage() {
     
     const filtered = destinations.filter(destination => {
       const matchesSearch = destination.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           destination.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           destination.location.toLowerCase().includes(searchQuery.toLowerCase());
+                           (destination.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (destination.location || destination.city).toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesLocation = selectedLocation === 'all' || destination.location === selectedLocation;
+      const matchesLocation = selectedLocation === 'all' || destination.location === selectedLocation || destination.city === selectedLocation;
       const matchesCategory = selectedCategory === 'all' || destination.category === selectedCategory;
-      const matchesRating = destination.rating >= minRating;
+      const matchesRating = (destination.rating || 0) >= minRating;
 
       return matchesSearch && matchesLocation && matchesCategory && matchesRating;
     });
@@ -51,7 +73,7 @@ export default function DestinationsPage() {
     }, 300);
 
     return filtered;
-  }, [searchQuery, selectedLocation, selectedCategory, minRating]);
+  }, [searchQuery, selectedLocation, selectedCategory, minRating, destinations]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -62,7 +84,19 @@ export default function DestinationsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Semua Destinasi Wisata</h1>
           <p className="text-xl text-emerald-100">Temukan destinasi impian Anda di Kalimantan Utara</p>
-          <p className="text-emerald-200 mt-2">Ditemukan {filteredDestinations.length} destinasi</p>
+          <div className="flex items-center justify-center space-x-4 mt-4">
+            <p className="text-emerald-200">Ditemukan {filteredDestinations.length} destinasi</p>
+            {dataSource === 'fallback' && (
+              <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-sm">
+                📋 Data Lokal
+              </span>
+            )}
+            {dataSource === 'database' && (
+              <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm">
+                🗄️ Database Live
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -167,9 +201,9 @@ export default function DestinationsPage() {
                 {filteredDestinations.map((destination) => (
                   <div key={destination.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
                     <div className="relative h-48 overflow-hidden">
-                      <Link href={`/destinations/${destination.id}`}>
+                      <Link href={`/destinations/${destination.slug}`}>
                         <Image
-                          src={destination.image}
+                          src={destination.featured_image || destination.images?.[0] || '/images/placeholder.jpg'}
                           alt={destination.name}
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-300"
@@ -182,11 +216,15 @@ export default function DestinationsPage() {
                       {/* ...existing overlay content... */}
                       <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
                         <span className="text-yellow-500">★</span>
-                        <span className="ml-1 font-semibold">{destination.rating}</span>
+                        <span className="ml-1 font-semibold">{destination.rating || 0}</span>
                       </div>
                       <div className="absolute top-4 left-4">
                         <span className="bg-emerald-600 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                          {destination.category === 'alam' ? 'Alam' : 'Budaya'}
+                          {destination.category === 'nature' ? 'Alam' : 
+                           destination.category === 'culture' ? 'Budaya' :
+                           destination.category === 'history' ? 'Sejarah' :
+                           destination.category === 'entertainment' ? 'Hiburan' :
+                           destination.category === 'adventure' ? 'Petualangan' : 'Lainnya'}
                         </span>
                       </div>
                       <div className="absolute bottom-4 right-4">
@@ -195,22 +233,27 @@ export default function DestinationsPage() {
                             id: destination.id,
                             name: destination.name,
                             type: 'destination',
-                            location: destination.location,
-                            image: destination.image,
-                            rating: destination.rating,
-                            description: destination.description
+                            location: destination.location || destination.city,
+                            image: destination.featured_image || destination.images?.[0] || '/images/placeholder.jpg',
+                            rating: destination.rating || 0,
+                            description: destination.description || ''
                           }}
                         />
                       </div>
                     </div>
                     <div className="p-5">
-                      <div className="text-emerald-600 text-sm font-semibold mb-2">{destination.location}</div>
+                      <div className="text-emerald-600 text-sm font-semibold mb-2">{destination.location || destination.city}</div>
                       <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{destination.name}</h3>
-                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-3">{destination.description}</p>
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-3">{destination.description || ''}</p>
                       <div className="flex justify-between items-center">
-                        <span className="text-emerald-600 font-semibold">{destination.ticketPrice}</span>
+                        <span className="text-emerald-600 font-semibold">
+                          {destination.price_range === 'free' ? 'Gratis' :
+                           destination.price_range === 'budget' ? 'Budget' :
+                           destination.price_range === 'mid-range' ? 'Menengah' :
+                           destination.price_range === 'expensive' ? 'Premium' : 'Harga Bervariasi'}
+                        </span>
                         <Link 
-                          href={`/destinations/${destination.id}`}
+                          href={`/destinations/${destination.slug}`}
                           className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors"
                         >
                           Selengkapnya →

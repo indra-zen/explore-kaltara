@@ -1051,19 +1051,24 @@ export class AdminService {
     metadata: any = {}
   ) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error in logActivity:', authError);
+        return;
+      }
       
       if (!user) {
         console.warn('No authenticated user found for activity logging');
         return;
       }
 
-      // Prepare the log data - handle both TEXT and UUID entity_id types
+      // Prepare the log data
       const logData = {
         user_id: user.id,
         action,
         entity_type: entityType,
-        entity_id: entityId, // This will work for both TEXT and UUID columns
+        entity_id: entityId, // Now accepts both UUID and TEXT
         description,
         metadata: metadata || {}
       };
@@ -1082,6 +1087,48 @@ export class AdminService {
           hint: error.hint,
           code: error.code
         });
+        
+        // Handle specific error types
+        if (error.code === '42501') {
+          console.error('RLS Policy Violation: User does not have permission to insert activity logs');
+          console.error('User email:', user.email);
+          console.error('Expected admin emails: admin@explorekaltara.com, demo@admin.com');
+          console.error('Solution: Apply migration 007_fix_activity_logs_rls.sql to fix RLS policies');
+        }
+        
+        // If it's a foreign key constraint error, try to create the profile first
+        if (error.code === '23503' && error.message.includes('profiles')) {
+          console.log('Attempting to create missing profile for user:', user.id);
+          try {
+            // Create the missing profile
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: user.id,
+                email: user.email || 'unknown@admin.com',
+                name: 'Admin User'
+              });
+            
+            if (profileError) {
+              console.error('Failed to create profile:', profileError);
+            } else {
+              console.log('Profile created, retrying activity log...');
+              // Retry the activity log insertion
+              const { error: retryError } = await supabase
+                .from('activity_logs')
+                .insert(logData);
+              
+              if (retryError) {
+                console.error('Retry failed:', retryError);
+              } else {
+                console.log('Activity logged successfully after profile creation');
+              }
+            }
+          } catch (profileCreationError) {
+            console.error('Error creating profile:', profileCreationError);
+          }
+        }
+        
         // Don't throw - just log the error so the main operation continues
         return;
       }
