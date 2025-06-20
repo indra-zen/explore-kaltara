@@ -168,7 +168,7 @@ export class PublicDataService {
 
       if (error) {
         console.error('Error fetching hotel:', error);
-        // Fallback to JSON data
+        // Fallback to JSON data - note: JSON uses 'id' field as slug
         const jsonData = await import('@/data/hotels.json');
         const hotel = jsonData.default.find(h => h.id === slug);
         return { data: hotel || null, error: null, fromFallback: true };
@@ -177,7 +177,7 @@ export class PublicDataService {
       return { data, error: null, fromFallback: false };
     } catch (error) {
       console.error('Error in getHotelBySlug:', error);
-      // Fallback to JSON data
+      // Fallback to JSON data - note: JSON uses 'id' field as slug
       const jsonData = await import('@/data/hotels.json');
       const hotel = jsonData.default.find(h => h.id === slug);
       return { data: hotel || null, error: null, fromFallback: true };

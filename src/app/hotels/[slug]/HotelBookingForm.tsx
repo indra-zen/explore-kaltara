@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import type { Hotel } from '@/lib/supabase/types';
 
 interface HotelBookingFormProps {
-  hotel: any;
+  hotel: Hotel;
 }
 
 export default function HotelBookingForm({ hotel }: HotelBookingFormProps) {
@@ -25,7 +26,12 @@ export default function HotelBookingForm({ hotel }: HotelBookingFormProps) {
       <h3 className="text-xl font-bold text-gray-900 mb-4">Pesan Kamar</h3>
       <div className="space-y-4">
         <div>
-          <span className="text-2xl font-bold text-emerald-600">{hotel.priceRange.split(' - ')[0]}</span>
+          <span className="text-2xl font-bold text-emerald-600">
+            {hotel.price_per_night 
+              ? `IDR ${hotel.price_per_night.toLocaleString()}` 
+              : 'Hubungi untuk harga'
+            }
+          </span>
           <span className="text-gray-600"> / malam</span>
         </div>
         

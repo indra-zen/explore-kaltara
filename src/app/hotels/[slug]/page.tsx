@@ -27,8 +27,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: HotelPageProps) {
   try {
     const { slug } = await params;
-    const result = await PublicDataService.getHotels();
-    const hotel = result.data.find((h: Hotel) => h.slug === slug);
+    const result = await PublicDataService.getHotelBySlug(slug);
+    const hotel = result.data;
     
     if (!hotel) {
       return {
@@ -50,8 +50,8 @@ export async function generateMetadata({ params }: HotelPageProps) {
 export default async function HotelPage({ params }: HotelPageProps) {
   try {
     const { slug } = await params;
-    const result = await PublicDataService.getHotels();
-    const hotel = result.data.find((h: Hotel) => h.slug === slug);
+    const result = await PublicDataService.getHotelBySlug(slug);
+    const hotel = result.data;
 
     if (!hotel) {
       notFound();
@@ -194,37 +194,37 @@ export default async function HotelPage({ params }: HotelPageProps) {
             <div className="mb-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Amenitas</h3>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-                {hotel.amenities.wifi && (
+                {hotel.amenities && hotel.amenities.includes('WiFi') && (
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl mb-2">📶</div>
                     <span className="text-sm text-gray-700">WiFi</span>
                   </div>
                 )}
-                {hotel.amenities.pool && (
+                {hotel.amenities && hotel.amenities.includes('Pool') && (
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl mb-2">🏊</div>
                     <span className="text-sm text-gray-700">Pool</span>
                   </div>
                 )}
-                {hotel.amenities.gym && (
+                {hotel.amenities && hotel.amenities.includes('Gym') && (
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl mb-2">💪</div>
                     <span className="text-sm text-gray-700">Gym</span>
                   </div>
                 )}
-                {hotel.amenities.restaurant && (
+                {hotel.amenities && hotel.amenities.includes('Restaurant') && (
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl mb-2">🍽️</div>
                     <span className="text-sm text-gray-700">Restaurant</span>
                   </div>
                 )}
-                {hotel.amenities.parking && (
+                {hotel.amenities && hotel.amenities.includes('Parking') && (
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl mb-2">🅿️</div>
                     <span className="text-sm text-gray-700">Parking</span>
                   </div>
                 )}
-                {hotel.amenities.airportShuttle && (
+                {hotel.amenities && hotel.amenities.includes('Airport Shuttle') && (
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl mb-2">🚐</div>
                     <span className="text-sm text-gray-700">Shuttle</span>
@@ -243,20 +243,22 @@ export default async function HotelPage({ params }: HotelPageProps) {
             <div className="bg-gray-50 rounded-2xl p-6 mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Informasi Hotel</h3>
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Kategori</span>
-                  <span className="font-semibold">{hotel.category.replace('-', ' ').toUpperCase()}</span>
-                </div>
+                {hotel.star_rating && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Bintang</span>
+                    <span className="font-semibold">{hotel.star_rating} Bintang</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Rating</span>
                   <div className="flex items-center">
                     <span className="text-yellow-500 mr-1">★</span>
-                    <span className="font-semibold">{hotel.rating}/5</span>
+                    <span className="font-semibold">{hotel.rating || 0}/5</span>
                   </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Ulasan</span>
-                  <span className="font-semibold">{hotel.reviewCount} reviews</span>
+                  <span className="font-semibold">{hotel.review_count || 0} reviews</span>
                 </div>
               </div>
             </div>
@@ -264,21 +266,30 @@ export default async function HotelPage({ params }: HotelPageProps) {
             {/* Location */}
             <div className="bg-gray-100 rounded-2xl p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Lokasi</h3>
-              <Map
-                center={[hotel.coordinates.lat, hotel.coordinates.lng]}
-                zoom={15}
-                markers={[{
-                  position: [hotel.coordinates.lat, hotel.coordinates.lng],
-                  title: hotel.name,
-                  description: hotel.address,
-                  link: `#`
-                }]}
-                height="300px"
-              />
-              <div className="mt-3 text-sm text-gray-600">
-                <p>📍 {hotel.address}</p>
-                <p className="text-xs mt-1">Koordinat: {hotel.coordinates.lat}, {hotel.coordinates.lng}</p>
-              </div>
+              {hotel.latitude && hotel.longitude ? (
+                <>
+                  <Map
+                    center={[hotel.latitude, hotel.longitude]}
+                    zoom={15}
+                    markers={[{
+                      position: [hotel.latitude, hotel.longitude],
+                      title: hotel.name,
+                      description: hotel.location,
+                      link: `#`
+                    }]}
+                    height="300px"
+                  />
+                  <div className="mt-3 text-sm text-gray-600">
+                    <p>📍 {hotel.location}</p>
+                    <p className="text-xs mt-1">Koordinat: {hotel.latitude}, {hotel.longitude}</p>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>📍 {hotel.location}</p>
+                  <p className="text-sm">Peta tidak tersedia</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
