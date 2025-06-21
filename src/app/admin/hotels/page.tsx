@@ -129,6 +129,8 @@ export default function HotelsPage() {
     try {
       setActionLoading(true);
       
+      console.log('Saving hotel with data:', hotelData);
+      
       if (currentHotel) {
         // Update existing hotel
         const updatedHotel = await AdminService.updateHotel(currentHotel.id, hotelData);

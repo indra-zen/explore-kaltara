@@ -122,6 +122,8 @@ export default function DestinationsPage() {
     try {
       setActionLoading(true);
       
+      console.log('Saving destination with data:', destinationData);
+      
       if (currentDestination) {
         // Update existing destination
         const updatedDestination = await AdminService.updateDestination(currentDestination.id, destinationData);

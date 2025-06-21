@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import AdminService from '@/lib/supabase/admin-service';
+import { getFacilityIcon, commonFacilities, commonHotelAmenities } from '@/lib/facility-icons';
+import { X, Plus } from 'lucide-react';
 
 // User CRUD Modal
 interface UserModalProps {
@@ -169,6 +171,7 @@ interface DestinationModalProps {
 export function DestinationModal({ isOpen, destination, onSave, onCancel, loading = false }: DestinationModalProps) {
   const [formData, setFormData] = useState({
     name: '',
+    slug: '',
     description: '',
     location: '',
     city: '',
@@ -180,6 +183,8 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
     facilities: [] as string[],
     latitude: 0,
     longitude: 0,
+    contact_info: {} as any,
+    opening_hours: {} as any,
     is_featured: false,
     status: 'active' as 'active' | 'inactive' | 'pending'
   });
@@ -189,6 +194,7 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
     if (destination) {
       setFormData({
         name: destination.name || '',
+        slug: destination.slug || '',
         description: destination.description || '',
         location: destination.location || '',
         city: destination.city || '',
@@ -200,12 +206,15 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
         facilities: destination.facilities || [],
         latitude: destination.latitude || 0,
         longitude: destination.longitude || 0,
+        contact_info: destination.contact_info || {},
+        opening_hours: destination.opening_hours || {},
         is_featured: destination.is_featured || false,
         status: destination.status || 'active'
       });
     } else {
       setFormData({
         name: '',
+        slug: '',
         description: '',
         location: '',
         city: '',
@@ -217,6 +226,8 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
         facilities: [],
         latitude: 0,
         longitude: 0,
+        contact_info: {},
+        opening_hours: {},
         is_featured: false,
         status: 'active'
       });
@@ -225,11 +236,28 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Generate slug from name if not provided
+    const slug = formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    // Ensure all required fields are present and properly formatted
+    const submissionData = {
+      ...formData,
+      slug,
+      description: formData.description || '',
+      rating: formData.rating || 0,
+      images: formData.images || [],
+      facilities: formData.facilities || [],
+      contact_info: formData.contact_info || {},
+      opening_hours: formData.opening_hours || {}
+    };
+    
+    console.log('Submitting destination data:', submissionData);
+    onSave(submissionData);
   };
 
-  const categories = ['nature', 'culture', 'adventure', 'relaxation', 'urban', 'historical'];
-  const priceRanges = ['budget', 'mid-range', 'luxury'];
+  const categories = ['nature', 'culture', 'history', 'entertainment', 'adventure'];
+  const priceRanges = ['free', 'budget', 'mid-range', 'expensive'];
 
   if (!isOpen) return null;
 
@@ -383,54 +411,128 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
             
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700">Facilities</label>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter facility (e.g., Parking, WiFi, Restaurant)"
-                    value={newFacility}
-                    onChange={(e) => setNewFacility(e.target.value)}
-                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (newFacility.trim()) {
-                        setFormData({
-                          ...formData,
-                          facilities: [...formData.facilities, newFacility.trim()]
-                        });
-                        setNewFacility('');
-                      }
-                    }}
-                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
-                  >
-                    Add
-                  </button>
-                </div>
-                
-                {formData.facilities.length > 0 && (
+              <div className="space-y-3">
+                {/* Quick Add Common Facilities */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Quick Add Common Facilities</label>
                   <div className="flex flex-wrap gap-2">
-                    {formData.facilities.map((facility, index) => (
-                      <div key={index} className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                        <span>{facility}</span>
+                    {commonFacilities.map((facility) => {
+                      const Icon = facility.icon;
+                      const isAdded = formData.facilities.includes(facility.name);
+                      return (
                         <button
+                          key={facility.name}
                           type="button"
                           onClick={() => {
-                            setFormData({
-                              ...formData,
-                              facilities: formData.facilities.filter((_, i) => i !== index)
-                            });
+                            if (!isAdded) {
+                              setFormData({
+                                ...formData,
+                                facilities: [...formData.facilities, facility.name]
+                              });
+                            }
                           }}
-                          className="text-blue-600 hover:text-blue-800 ml-1"
+                          disabled={isAdded}
+                          className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md border transition-colors ${
+                            isAdded 
+                              ? 'bg-green-100 text-green-800 border-green-300 cursor-not-allowed' 
+                              : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300'
+                          }`}
                         >
-                          ×
+                          <Icon size={12} />
+                          <span>{facility.name}</span>
+                          {isAdded && <span className="text-green-600">✓</span>}
                         </button>
-                      </div>
-                    ))}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom Facility Input */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Add Custom Facility</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter custom facility (e.g., Hot Spring, Cave Tour)"
+                      value={newFacility}
+                      onChange={(e) => setNewFacility(e.target.value)}
+                      className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newFacility.trim() && !formData.facilities.includes(newFacility.trim())) {
+                          setFormData({
+                            ...formData,
+                            facilities: [...formData.facilities, newFacility.trim()]
+                          });
+                          setNewFacility('');
+                        }
+                      }}
+                      className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Selected Facilities with Icons */}
+                {formData.facilities.length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-2">Selected Facilities</label>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.facilities.map((facility, index) => {
+                        const Icon = getFacilityIcon(facility);
+                        return (
+                          <div key={index} className="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm border border-blue-200">
+                            <Icon size={14} />
+                            <span>{facility}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  facilities: formData.facilities.filter((_, i) => i !== index)
+                                });
+                              }}
+                              className="text-blue-600 hover:text-blue-800 ml-1 font-bold"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* Coordinates Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Latitude</label>
+              <input
+                type="number"
+                step="any"
+                placeholder="e.g., 3.0736"
+                value={formData.latitude || ''}
+                onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) || 0 })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Decimal degrees (North Kaltara: ~2.8 to 4.0)</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Longitude</label>
+              <input
+                type="number"
+                step="any"
+                placeholder="e.g., 117.1356"
+                value={formData.longitude || ''}
+                onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) || 0 })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Decimal degrees (East Kaltara: ~116.8 to 117.7)</p>
             </div>
             
             <div className="md:col-span-2">
@@ -490,6 +592,7 @@ interface HotelModalProps {
 export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }: HotelModalProps) {
   const [formData, setFormData] = useState({
     name: '',
+    slug: '',
     description: '',
     city: '',
     location: '',
@@ -502,6 +605,9 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
     room_types: [] as string[],
     latitude: 0,
     longitude: 0,
+    contact_info: {} as any,
+    policies: {} as any,
+    currency: 'USD',
     status: 'active' as 'active' | 'inactive' | 'pending',
     is_featured: false
   });
@@ -511,6 +617,7 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
     if (hotel) {
       setFormData({
         name: hotel.name || '',
+        slug: hotel.slug || '',
         description: hotel.description || '',
         city: hotel.city || '',
         location: hotel.location || '',
@@ -523,12 +630,16 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
         room_types: hotel.room_types || [],
         latitude: hotel.latitude || 0,
         longitude: hotel.longitude || 0,
+        contact_info: hotel.contact_info || {},
+        policies: hotel.policies || {},
+        currency: hotel.currency || 'USD',
         status: hotel.status || 'active',
         is_featured: hotel.is_featured || false
       });
     } else {
       setFormData({
         name: '',
+        slug: '',
         description: '',
         city: '',
         location: '',
@@ -541,6 +652,9 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
         room_types: [],
         latitude: 0,
         longitude: 0,
+        contact_info: {},
+        policies: {},
+        currency: 'USD',
         status: 'active',
         is_featured: false
       });
@@ -549,7 +663,25 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Generate slug from name if not provided
+    const slug = formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    // Ensure all required fields are present and properly formatted
+    const submissionData = {
+      ...formData,
+      slug,
+      description: formData.description || '',
+      rating: formData.rating || 0,
+      images: formData.images || [],
+      amenities: formData.amenities || [],
+      contact_info: formData.contact_info || {},
+      policies: formData.policies || {},
+      room_types: formData.room_types || []
+    };
+    
+    console.log('Submitting hotel data:', submissionData);
+    onSave(submissionData);
   };
 
   if (!isOpen) return null;
@@ -711,54 +843,128 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
             
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700">Amenities</label>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter amenity (e.g., WiFi, Pool, Gym)"
-                    value={newAmenity}
-                    onChange={(e) => setNewAmenity(e.target.value)}
-                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (newAmenity.trim()) {
-                        setFormData({
-                          ...formData,
-                          amenities: [...formData.amenities, newAmenity.trim()]
-                        });
-                        setNewAmenity('');
-                      }
-                    }}
-                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
-                  >
-                    Add
-                  </button>
-                </div>
-                
-                {formData.amenities.length > 0 && (
+              <div className="space-y-3">
+                {/* Quick Add Common Amenities */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Quick Add Common Amenities</label>
                   <div className="flex flex-wrap gap-2">
-                    {formData.amenities.map((amenity, index) => (
-                      <div key={index} className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
-                        <span>{amenity}</span>
+                    {commonHotelAmenities.map((amenity) => {
+                      const Icon = amenity.icon;
+                      const isAdded = formData.amenities.includes(amenity.name);
+                      return (
                         <button
+                          key={amenity.name}
                           type="button"
                           onClick={() => {
-                            setFormData({
-                              ...formData,
-                              amenities: formData.amenities.filter((_, i) => i !== index)
-                            });
+                            if (!isAdded) {
+                              setFormData({
+                                ...formData,
+                                amenities: [...formData.amenities, amenity.name]
+                              });
+                            }
                           }}
-                          className="text-green-600 hover:text-green-800 ml-1"
+                          disabled={isAdded}
+                          className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md border transition-colors ${
+                            isAdded 
+                              ? 'bg-green-100 text-green-800 border-green-300 cursor-not-allowed' 
+                              : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-green-50 hover:text-green-700 hover:border-green-300'
+                          }`}
                         >
-                          ×
+                          <Icon size={12} />
+                          <span>{amenity.name}</span>
+                          {isAdded && <span className="text-green-600">✓</span>}
                         </button>
-                      </div>
-                    ))}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom Amenity Input */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Add Custom Amenity</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter custom amenity (e.g., Spa, Balcony, Mini Bar)"
+                      value={newAmenity}
+                      onChange={(e) => setNewAmenity(e.target.value)}
+                      className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
+                          setFormData({
+                            ...formData,
+                            amenities: [...formData.amenities, newAmenity.trim()]
+                          });
+                          setNewAmenity('');
+                        }
+                      }}
+                      className="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Selected Amenities with Icons */}
+                {formData.amenities.length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-2">Selected Amenities</label>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.amenities.map((amenity, index) => {
+                        const Icon = getFacilityIcon(amenity);
+                        return (
+                          <div key={index} className="flex items-center gap-1 px-3 py-2 bg-green-100 text-green-800 rounded-lg text-sm border border-green-200">
+                            <Icon size={14} />
+                            <span>{amenity}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  amenities: formData.amenities.filter((_, i) => i !== index)
+                                });
+                              }}
+                              className="text-green-600 hover:text-green-800 ml-1 font-bold"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* Coordinates Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Latitude</label>
+              <input
+                type="number"
+                step="any"
+                placeholder="e.g., 3.0736"
+                value={formData.latitude || ''}
+                onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) || 0 })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Decimal degrees (North Kaltara: ~2.8 to 4.0)</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Longitude</label>
+              <input
+                type="number"
+                step="any"
+                placeholder="e.g., 117.1356"
+                value={formData.longitude || ''}
+                onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) || 0 })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Decimal degrees (East Kaltara: ~116.8 to 117.7)</p>
             </div>
             
             <div className="md:col-span-2">

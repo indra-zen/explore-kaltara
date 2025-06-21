@@ -7,6 +7,7 @@ import Map from '@/components/Map';
 import Header from '@/components/Header';
 import WishlistButton from '@/components/WishlistButton';
 import WeatherWidget from '@/components/WeatherWidget';
+import { getFacilityIcon } from '@/lib/facility-icons';
 
 interface DestinationPageProps {
   params: Promise<{ slug: string }>;
@@ -174,12 +175,15 @@ export default async function DestinationPage({ params }: DestinationPageProps) 
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Fasilitas</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 {destination.facilities && destination.facilities.length > 0 ? 
-                  destination.facilities.map((facility: string, index: number) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
-                      <span className="text-gray-800">{facility}</span>
-                    </div>
-                  )) : (
+                  destination.facilities.map((facility: string, index: number) => {
+                    const IconComponent = getFacilityIcon(facility);
+                    return (
+                      <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <IconComponent className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                        <span className="text-gray-800">{facility}</span>
+                      </div>
+                    );
+                  }) : (
                     <div className="col-span-2 text-center py-8 text-gray-500">
                       Informasi fasilitas belum tersedia
                     </div>
