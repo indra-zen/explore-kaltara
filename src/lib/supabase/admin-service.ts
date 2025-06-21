@@ -524,6 +524,8 @@ export class AdminService {
     status: 'active' | 'inactive' | 'pending';
   }>) {
     try {
+      console.log('Updating destination with ID:', id, 'Data:', destinationData);
+      
       const { data, error } = await supabase
         .from('destinations')
         .update(destinationData)
@@ -531,18 +533,30 @@ export class AdminService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
 
-      await this.logActivity(
-        'update',
-        'destination',
-        id,
-        `Updated destination: ${destinationData.name || 'Unknown'}`,
-        destinationData
-      );
+      console.log('Destination updated successfully:', data);
 
-      // Trigger revalidation for destinations list and specific destination page
-      await this.triggerRevalidation('destination', data.slug);
+      // Log activity (non-blocking)
+      try {
+        await this.logActivity(
+          'update',
+          'destination',
+          id,
+          `Updated destination: ${destinationData.name || 'Unknown'}`,
+          destinationData
+        );
+      } catch (logError) {
+        console.warn('Activity logging failed:', logError);
+      }
+
+      // Trigger revalidation (non-blocking and with timeout)
+      this.triggerRevalidation('destination', data.slug).catch(revalError => {
+        console.warn('Revalidation failed:', revalError);
+      });
 
       return data;
     } catch (error) {
@@ -669,6 +683,8 @@ export class AdminService {
     status: 'active' | 'inactive' | 'pending';
   }>) {
     try {
+      console.log('Updating hotel with ID:', id, 'Data:', hotelData);
+      
       const { data, error } = await supabase
         .from('hotels')
         .update(hotelData)
@@ -676,18 +692,30 @@ export class AdminService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
 
-      await this.logActivity(
-        'update',
-        'hotel',
-        id,
-        `Updated hotel: ${hotelData.name || 'Unknown'}`,
-        hotelData
-      );
+      console.log('Hotel updated successfully:', data);
 
-      // Trigger revalidation for hotels list and specific hotel page
-      await this.triggerRevalidation('hotel', data.slug);
+      // Log activity (non-blocking)
+      try {
+        await this.logActivity(
+          'update',
+          'hotel',
+          id,
+          `Updated hotel: ${hotelData.name || 'Unknown'}`,
+          hotelData
+        );
+      } catch (logError) {
+        console.warn('Activity logging failed:', logError);
+      }
+
+      // Trigger revalidation (non-blocking and with timeout)
+      this.triggerRevalidation('hotel', data.slug).catch(revalError => {
+        console.warn('Revalidation failed:', revalError);
+      });
 
       return data;
     } catch (error) {
@@ -1205,18 +1233,34 @@ export class AdminService {
   static async triggerRevalidation(type: 'destination' | 'hotel', slug?: string) {
     try {
       if (typeof window !== 'undefined') {
-        // Client-side: make API call
-        await fetch('/api/revalidate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type,
-            slug,
-            secret: process.env.NEXT_PUBLIC_REVALIDATION_SECRET || 'explore-kaltara-revalidate-2025'
-          }),
-        });
+        // Client-side: make API call with timeout and error handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        try {
+          await fetch('/api/revalidate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type,
+              slug,
+              secret: process.env.NEXT_PUBLIC_REVALIDATION_SECRET || 'explore-kaltara-revalidate-2025'
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          console.log(`Triggered revalidation for ${type}${slug ? ` (${slug})` : ''}`);
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+            console.warn('Revalidation request timed out - continuing without revalidation');
+          } else {
+            console.warn('Revalidation failed - continuing without revalidation:', fetchError);
+          }
+          // Don't throw - continue with the operation even if revalidation fails
+        }
       } else {
         // Server-side: direct revalidation
         const { revalidatePath } = await import('next/cache');
@@ -1225,10 +1269,11 @@ export class AdminService {
         } else {
           await revalidatePath(`/${type}s`);
         }
+        console.log(`Triggered revalidation for ${type}${slug ? ` (${slug})` : ''}`);
       }
-      console.log(`Triggered revalidation for ${type}${slug ? ` (${slug})` : ''}`);
     } catch (error) {
       console.error('Error triggering revalidation:', error);
+      // Don't throw - revalidation failure shouldn't block the main operation
     }
   }
 }
