@@ -28,14 +28,9 @@ interface BookingForm {
   specialRequests: string;
 }
 
-interface PaymentForm {
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  cardHolder: string;
-  billingAddress: string;
-  city: string;
-  postalCode: string;
+interface ContactForm {
+  fullName: string;
+  phone: string;
 }
 
 function BookingContent() {
@@ -49,14 +44,9 @@ function BookingContent() {
     rooms: 1,
     specialRequests: ''
   });
-  const [paymentForm, setPaymentForm] = useState<PaymentForm>({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    cardHolder: '',
-    billingAddress: '',
-    city: '',
-    postalCode: ''
+  const [contactForm, setContactForm] = useState<ContactForm>({
+    fullName: '',
+    phone: ''
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
@@ -176,7 +166,7 @@ function BookingContent() {
         // Only load draft if we don't have URL parameters
         const draft = JSON.parse(savedDraft);
         setBookingForm(prev => ({...prev, ...draft.bookingForm}));
-        setPaymentForm(prev => ({...prev, ...draft.paymentForm}));
+        setContactForm(prev => ({...prev, ...draft.contactForm}));
         setCurrentStep(draft.currentStep || 1);
       }
     } catch (error) {
@@ -191,7 +181,7 @@ function BookingContent() {
     const draftKey = `booking-draft-${bookingItem.id}`;
     const draft = {
       bookingForm,
-      paymentForm,
+      contactForm,
       currentStep,
       timestamp: Date.now()
     };
@@ -201,7 +191,7 @@ function BookingContent() {
     } catch (error) {
       console.error('Error saving draft:', error);
     }
-  }, [bookingForm, paymentForm, currentStep, bookingItem]);
+  }, [bookingForm, contactForm, currentStep, bookingItem]);
 
   const handleBookingFormChange = (field: keyof BookingForm, value: string | number) => {
     setBookingForm(prev => ({
@@ -210,36 +200,11 @@ function BookingContent() {
     }));
   };
 
-  const handlePaymentFormChange = (field: keyof PaymentForm, value: string) => {
-    setPaymentForm(prev => ({
+  const handleContactFormChange = (field: keyof ContactForm, value: string) => {
+    setContactForm(prev => ({
       ...prev,
       [field]: value
     }));
-  };
-
-  const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
-    const parts = [];
-
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return v;
-    }
-  };
-
-  const formatExpiryDate = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
-    }
-    return v;
   };
 
   const validateBookingForm = () => {
@@ -268,41 +233,16 @@ function BookingContent() {
     return true;
   };
 
-  const validatePaymentForm = () => {
-    const { cardNumber, expiryDate, cvv, cardHolder, billingAddress, city, postalCode } = paymentForm;
+  const validateContactForm = () => {
+    const { fullName, phone } = contactForm;
 
-    if (!cardNumber || cardNumber.replace(/\s/g, '').length < 16) {
-      alert('Nomor kartu kredit harus 16 digit');
+    if (!fullName.trim()) {
+      alert('Nama lengkap harus diisi');
       return false;
     }
 
-    if (!expiryDate || expiryDate.length < 5) {
-      alert('Tanggal kedaluwarsa kartu harus diisi (MM/YY)');
-      return false;
-    }
-
-    if (!cvv || cvv.length < 3) {
-      alert('CVV harus 3 digit');
-      return false;
-    }
-
-    if (!cardHolder.trim()) {
-      alert('Nama pemegang kartu harus diisi');
-      return false;
-    }
-
-    if (!billingAddress.trim()) {
-      alert('Alamat tagihan harus diisi');
-      return false;
-    }
-
-    if (!city.trim()) {
-      alert('Kota harus diisi');
-      return false;
-    }
-
-    if (!postalCode.trim()) {
-      alert('Kode pos harus diisi');
+    if (!phone.trim()) {
+      alert('Nomor telepon harus diisi');
       return false;
     }
 
@@ -311,7 +251,7 @@ function BookingContent() {
 
   const nextStep = () => {
     if (currentStep === 1 && !validateBookingForm()) return;
-    if (currentStep === 2 && !validatePaymentForm()) return;
+    if (currentStep === 2 && !validateContactForm()) return;
     
     if (currentStep === 2) {
       setShowConfirmModal(true);
@@ -368,13 +308,16 @@ function BookingContent() {
         payment_status: 'pending' as const,
         payment_method: 'Xendit',
         notes: bookingForm.specialRequests || undefined,
-        contact_name: user.name || paymentForm.cardHolder || 'Guest',
+        contact_name: user.name || contactForm.fullName || 'Guest',
         contact_email: user.email || '',
         contact_phone: undefined
       };
 
       // Create booking first
+      console.log('Creating booking with data:', bookingData);
       const { data: dbBooking, error: dbError } = await AdminService.createBooking(bookingData);
+      
+      console.log('Booking creation result:', { dbBooking, dbError });
       
       if (dbError) {
         console.error('Database save failed:', dbError);
@@ -383,11 +326,17 @@ function BookingContent() {
       }
 
       if (!dbBooking?.id) {
+        console.error('No booking ID returned:', dbBooking);
         alert('Failed to create booking. Please try again.');
         return;
       }
 
-      // Create Xendit payment
+      console.log('Booking created successfully with ID:', dbBooking.id);
+
+      // Wait a moment to ensure database consistency
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create Xendit payment with booking details
       const paymentResponse = await fetch('/api/payment/create', {
         method: 'POST',
         headers: {
@@ -398,7 +347,13 @@ function BookingContent() {
           amount: calculateTotal(),
           currency: 'IDR',
           customerEmail: user.email,
-          customerName: paymentForm.cardHolder || user.name || 'Guest',
+          customerName: contactForm.fullName || user.name || 'Guest',
+          // Include booking details to avoid database query issues
+          bookingDetails: {
+            ...dbBooking,
+            itemName: bookingItem?.name || 'Unknown Item',
+            itemType: bookingItem?.type || 'unknown'
+          }
         }),
       });
 
@@ -416,6 +371,25 @@ function BookingContent() {
       alert('Terjadi kesalahan saat memproses booking. Silakan coba lagi.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const calculateSubtotal = () => {
+    if (!bookingItem) return 0;
+    
+    const basePrice = bookingItem.price;
+    const { checkIn, checkOut, guests, rooms } = bookingForm;
+    
+    if (!checkIn || !checkOut) return basePrice;
+    
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (bookingItem.type === 'hotel') {
+      return basePrice * nights * rooms;
+    } else {
+      return basePrice * guests;
     }
   };
 
@@ -629,103 +603,73 @@ function BookingContent() {
             {currentStep === 2 && (
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">
-                  <CreditCard className="w-5 h-5 inline mr-2" />
-                  Informasi Pembayaran
+                  <Check className="w-5 h-5 inline mr-2" />
+                  Konfirmasi & Pembayaran
                 </h2>
                 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nomor Kartu Kredit
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentForm.cardNumber}
-                      onChange={(e) => handlePaymentFormChange('cardNumber', formatCardNumber(e.target.value))}
-                      maxLength={19}
-                      placeholder="1234 5678 9012 3456"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
-                    />
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <h3 className="text-sm font-medium text-blue-800">Pembayaran melalui Xendit</h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Anda akan diarahkan ke halaman pembayaran Xendit yang aman. Pilih metode pembayaran favorit Anda:
+                      </p>
+                      <ul className="text-sm text-blue-700 mt-2 list-disc list-inside">
+                        <li>Transfer Bank (BCA, Mandiri, BNI, BRI)</li>
+                        <li>E-wallet (OVO, DANA, LinkAja, ShopeePay)</li>
+                        <li>Kartu Kredit/Debit</li>
+                        <li>Virtual Account</li>
+                        <li>Retail (Alfamart, Indomaret)</li>
+                      </ul>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tanggal Kedaluwarsa
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentForm.expiryDate}
-                      onChange={(e) => handlePaymentFormChange('expiryDate', formatExpiryDate(e.target.value))}
-                      maxLength={5}
-                      placeholder="MM/YY"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      CVV
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentForm.cvv}
-                      onChange={(e) => handlePaymentFormChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 3))}
-                      maxLength={3}
-                      placeholder="123"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nama Pemegang Kartu
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentForm.cardHolder}
-                      onChange={(e) => handlePaymentFormChange('cardHolder', e.target.value)}
-                      placeholder="Nama sesuai kartu"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Alamat Tagihan
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentForm.billingAddress}
-                      onChange={(e) => handlePaymentFormChange('billingAddress', e.target.value)}
-                      placeholder="Alamat lengkap"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Kota
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentForm.city}
-                      onChange={(e) => handlePaymentFormChange('city', e.target.value)}
-                      placeholder="Kota"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Kode Pos
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentForm.postalCode}
-                      onChange={(e) => handlePaymentFormChange('postalCode', e.target.value.replace(/\D/g, '').slice(0, 5))}
-                      placeholder="12345"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">Informasi Kontak</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Nama Lengkap
+                        </label>
+                        <input
+                          type="text"
+                          value={contactForm.fullName}
+                          onChange={(e) => handleContactFormChange('fullName', e.target.value)}
+                          placeholder="Nama sesuai identitas"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          value={user?.email || ''}
+                          readOnly
+                          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Nomor Telepon
+                        </label>
+                        <input
+                          type="tel"
+                          value={contactForm.phone}
+                          onChange={(e) => handleContactFormChange('phone', e.target.value)}
+                          placeholder="08xxxxxxxxxx"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
