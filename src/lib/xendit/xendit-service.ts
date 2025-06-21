@@ -95,12 +95,39 @@ export class XenditService {
       return true; // For development, allow without verification
     }
     
+    // Log for debugging
+    console.log('Signature verification:', {
+      receivedSignature: signature,
+      webhookToken: webhookToken,
+      bodyLength: rawBody.length
+    });
+    
+    // Method 1: Direct token comparison (most common for Xendit)
+    if (signature === webhookToken) {
+      console.log('Direct token match successful');
+      return true;
+    }
+    
+    // Method 2: HMAC SHA256 signature
     const hash = crypto
       .createHmac('sha256', webhookToken)
       .update(rawBody)
       .digest('hex');
     
-    return hash === signature;
+    if (hash === signature) {
+      console.log('HMAC signature match successful');
+      return true;
+    }
+    
+    // Method 3: Try with 'sha256=' prefix
+    const hashWithPrefix = 'sha256=' + hash;
+    if (hashWithPrefix === signature) {
+      console.log('HMAC with prefix match successful');
+      return true;
+    }
+    
+    console.log('All signature verification methods failed');
+    return false;
   }
 }
 
