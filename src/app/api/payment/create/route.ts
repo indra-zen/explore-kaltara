@@ -122,8 +122,16 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Payment creation error:', error);
+    
+    // Return more specific error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return NextResponse.json(
-      { error: 'Failed to create payment' },
+      { 
+        error: 'Failed to create payment',
+        details: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

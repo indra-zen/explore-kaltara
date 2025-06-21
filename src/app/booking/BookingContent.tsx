@@ -276,11 +276,13 @@ function BookingContent() {
     }
 
     setIsProcessing(true);
+    let createdBooking: any = null;
+    let AdminService: any = null;
 
     try {
       // Prepare booking data for database
       // Import AdminService for creating the booking
-      const AdminService = (await import('@/lib/supabase/admin-service')).default;
+      AdminService = (await import('@/lib/supabase/admin-service')).default;
       
       // bookingItem.id is already the correct database ID (UUID)
       // since we loaded it from the database using PublicDataService
@@ -331,6 +333,9 @@ function BookingContent() {
         return;
       }
 
+      // Store the created booking for potential cleanup
+      createdBooking = dbBooking;
+      
       console.log('Booking created successfully with ID:', dbBooking.id);
 
       // Wait a moment to ensure database consistency
@@ -359,16 +364,34 @@ function BookingContent() {
 
       const paymentData = await paymentResponse.json();
 
+      console.log('Payment response:', paymentData);
+
       if (!paymentData.success) {
-        throw new Error(paymentData.error || 'Failed to create payment');
+        const errorMsg = paymentData.details || paymentData.error || 'Failed to create payment';
+        throw new Error(errorMsg);
       }
+
+      console.log('Payment created successfully, redirecting to:', paymentData.payment.invoice_url);
 
       // Redirect to Xendit payment page
       window.location.href = paymentData.payment.invoice_url;
 
     } catch (error) {
       console.error('Booking failed:', error);
-      alert('Terjadi kesalahan saat memproses booking. Silakan coba lagi.');
+      
+      // If we created a booking but payment failed, clean up the booking
+      if (createdBooking?.id && AdminService) {
+        try {
+          console.log('Cleaning up failed booking:', createdBooking.id);
+          await AdminService.deleteBooking(createdBooking.id);
+        } catch (cleanupError) {
+          console.error('Failed to cleanup booking:', cleanupError);
+        }
+      }
+      
+      // Show more specific error message to user
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Terjadi kesalahan saat memproses booking: ${errorMessage}`);
     } finally {
       setIsProcessing(false);
     }

@@ -29,6 +29,8 @@ export class XenditService {
   // Create Invoice using any type to handle API differences
   static async createInvoice(paymentData: PaymentRequest): Promise<PaymentResponse> {
     try {
+      console.log('Creating Xendit invoice with data:', paymentData);
+      
       const invoiceRequest = {
         externalId: `booking-${paymentData.bookingId}-${Date.now()}`,
         amount: paymentData.amount,
@@ -50,7 +52,14 @@ export class XenditService {
         ],
       } as any;
 
-      const invoice = await xendit.Invoice.createInvoice(invoiceRequest);
+      console.log('Xendit invoice request:', invoiceRequest);
+      
+      // The Xendit SDK expects the data to be wrapped in a createInvoiceRequest object
+      const invoice = await xendit.Invoice.createInvoice({
+        data: invoiceRequest
+      });
+      
+      console.log('Xendit invoice response:', invoice);
 
       return {
         id: invoice.id || '',
@@ -63,7 +72,14 @@ export class XenditService {
       };
     } catch (error) {
       console.error('Xendit Invoice Creation Error:', error);
-      throw new Error('Failed to create payment invoice');
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        throw new Error(`Xendit API Error: ${error.message}`);
+      } else {
+        throw new Error('Failed to create payment invoice');
+      }
     }
   }
 
