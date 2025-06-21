@@ -338,13 +338,6 @@ function BookingContent() {
     setIsProcessing(true);
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      // Generate booking ID
-      const newBookingId = 'BK' + Date.now().toString().substr(-8);
-      setBookingId(newBookingId);
-
       // Prepare booking data for database
       // Import AdminService for creating the booking
       const AdminService = (await import('@/lib/supabase/admin-service')).default;
@@ -371,53 +364,53 @@ function BookingContent() {
         rooms: bookingForm.rooms || 1,
         total_amount: calculateTotal(),
         currency: 'IDR',
-        status: 'confirmed' as const,
-        payment_status: 'paid' as const,
-        payment_method: 'Credit Card',
+        status: 'pending' as const,
+        payment_status: 'pending' as const,
+        payment_method: 'Xendit',
         notes: bookingForm.specialRequests || undefined,
         contact_name: user.name || paymentForm.cardHolder || 'Guest',
         contact_email: user.email || '',
         contact_phone: undefined
       };
 
-      // Save booking to database
+      // Create booking first
       const { data: dbBooking, error: dbError } = await AdminService.createBooking(bookingData);
       
       if (dbError) {
         console.error('Database save failed:', dbError);
-        // Still allow the booking to proceed with localStorage fallback
+        alert('Failed to create booking. Please try again.');
+        return;
       }
 
-      // Save booking to localStorage (for backward compatibility and offline access)
-      const booking = {
-        id: dbBooking?.id || newBookingId,
-        userId: user.id,
-        item: bookingItem,
-        details: bookingForm,
-        payment: {
-          ...paymentForm,
-          cardNumber: paymentForm.cardNumber.substr(-4) // Only save last 4 digits
+      if (!dbBooking?.id) {
+        alert('Failed to create booking. Please try again.');
+        return;
+      }
+
+      // Create Xendit payment
+      const paymentResponse = await fetch('/api/payment/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        total: calculateTotal(),
-        status: 'confirmed',
-        createdAt: new Date().toISOString()
-      };
+        body: JSON.stringify({
+          bookingId: dbBooking.id,
+          amount: calculateTotal(),
+          currency: 'IDR',
+          customerEmail: user.email,
+          customerName: paymentForm.cardHolder || user.name || 'Guest',
+        }),
+      });
 
-      if (typeof window !== 'undefined') {
-        try {
-          const existingBookings = JSON.parse(localStorage.getItem('kaltara-bookings') || '[]');
-          existingBookings.push(booking);
-          localStorage.setItem('kaltara-bookings', JSON.stringify(existingBookings));
+      const paymentData = await paymentResponse.json();
 
-          // Clean up draft
-          const draftKey = `booking-draft-${bookingItem?.id}`;
-          localStorage.removeItem(draftKey);
-        } catch (error) {
-          console.error('Error saving booking to localStorage:', error);
-        }
+      if (!paymentData.success) {
+        throw new Error(paymentData.error || 'Failed to create payment');
       }
 
-      setBookingComplete(true);
+      // Redirect to Xendit payment page
+      window.location.href = paymentData.payment.invoice_url;
+
     } catch (error) {
       console.error('Booking failed:', error);
       alert('Terjadi kesalahan saat memproses booking. Silakan coba lagi.');
@@ -752,7 +745,7 @@ function BookingContent() {
                 onClick={nextStep}
                 className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                {currentStep === 2 ? 'Konfirmasi Booking' : 'Selanjutnya'}
+                {currentStep === 2 ? 'Bayar Sekarang' : 'Selanjutnya'}
               </button>
             </div>
           </div>
@@ -838,9 +831,9 @@ function BookingContent() {
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Konfirmasi Booking</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Konfirmasi Pembayaran</h3>
             <p className="text-gray-600 mb-6">
-              Pastikan semua informasi sudah benar. Setelah dikonfirmasi, pembayaran akan diproses.
+              Pastikan semua informasi sudah benar. Anda akan diarahkan ke halaman pembayaran Xendit untuk menyelesaikan transaksi.
             </p>
             <div className="flex space-x-3">
               <button
@@ -865,8 +858,8 @@ function BookingContent() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 text-center">
             <LoadingSpinner />
-            <h3 className="text-lg font-bold text-gray-900 mt-4 mb-2">Memproses Pembayaran</h3>
-            <p className="text-gray-600">Mohon tunggu, kami sedang memproses pembayaran Anda...</p>
+            <h3 className="text-lg font-bold text-gray-900 mt-4 mb-2">Menyiapkan Pembayaran</h3>
+            <p className="text-gray-600">Mohon tunggu, kami sedang menyiapkan halaman pembayaran Anda...</p>
           </div>
         </div>
       )}
