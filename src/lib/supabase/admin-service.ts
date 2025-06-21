@@ -270,8 +270,8 @@ export class AdminService {
         .select(`
           *,
           profiles(name, email),
-          hotels(name),
-          destinations(name)
+          hotels(name, location, featured_image, rating, price_per_night),
+          destinations(name, location, featured_image, rating, price)
         `, { count: 'exact' })
         .order('created_at', { ascending: false });
 
@@ -323,9 +323,9 @@ export class AdminService {
           rooms: bookingData.rooms || 1,
           total_amount: bookingData.total_amount,
           currency: bookingData.currency || 'IDR',
-          status: bookingData.status || 'confirmed',
-          payment_status: bookingData.payment_status || 'paid',
-          payment_method: bookingData.payment_method || 'credit_card',
+          status: bookingData.status || 'pending',
+          payment_status: bookingData.payment_status || 'pending',
+          payment_method: bookingData.payment_method || 'unknown',
           notes: bookingData.notes || null,
           contact_name: bookingData.contact_name,
           contact_email: bookingData.contact_email,

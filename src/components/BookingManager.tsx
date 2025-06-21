@@ -3,6 +3,31 @@
 import { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, Clock, CreditCard, Check, AlertCircle, Eye, Download, Star } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface DatabaseBooking {
+  id: string;
+  user_id: string;
+  booking_type: 'hotel' | 'destination';
+  destination_id?: string;
+  hotel_id?: string;
+  check_in_date: string;
+  check_out_date?: string;
+  guests: number;
+  rooms?: number;
+  total_amount: number;
+  currency: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  payment_method: string;
+  payment_id?: string;
+  notes?: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface Booking {
   id: string;
@@ -24,11 +49,9 @@ interface Booking {
     specialRequests: string;
   };
   payment: {
-    cardNumber: string;
-    cardHolder: string;
-    billingAddress: string;
-    city: string;
-    postalCode: string;
+    method: string;
+    status: string;
+    id?: string;
   };
   total: number;
   status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
@@ -40,54 +63,126 @@ export default function BookingManager() {
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending' | 'cancelled' | 'completed'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Load bookings from localStorage
-    const loadBookings = () => {
-      if (typeof window === 'undefined') {
-        setIsLoading(false);
+    if (isAuthenticated && user) {
+      loadBookingsFromDatabase();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, user]);
+
+  const loadBookingsFromDatabase = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Import AdminService dynamically to avoid server-side issues
+      const AdminService = (await import('@/lib/supabase/admin-service')).default;
+      
+      // Get all bookings and filter by user
+      const { data: allBookings } = await AdminService.getBookings(1, 100);
+      
+      if (!allBookings) {
+        setBookings([]);
         return;
       }
       
-      try {
-        const savedBookings = localStorage.getItem('kaltara-bookings');
-        if (savedBookings) {
-          let bookings = JSON.parse(savedBookings);
-          
-          // Migrate old booking structure to new structure
-          bookings = bookings.map((booking: any) => {
-            // Check if booking uses old structure
-            if (booking.bookingDetails && !booking.details) {
-              return {
-                ...booking,
-                details: booking.bookingDetails,
-                payment: booking.paymentDetails || {},
-                total: booking.totalAmount || booking.total || 0
-              };
-            }
-            
-            // Ensure all required fields exist
+      // Filter bookings for current user and transform to UI format
+      const userBookings = allBookings
+        .filter((booking: any) => booking.user_id === user?.id)
+        .map((dbBooking: any) => transformDatabaseBooking(dbBooking));
+      
+      setBookings(userBookings);
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+      setNotification({ message: 'Failed to load bookings', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const transformDatabaseBooking = (dbBooking: any): Booking => {
+    // Get item name and details
+    const itemName = dbBooking.hotels?.name || dbBooking.destinations?.name || 'Unknown Item';
+    const itemLocation = dbBooking.hotels?.location || dbBooking.destinations?.location || 'Unknown Location';
+    const itemImage = dbBooking.hotels?.featured_image || dbBooking.destinations?.featured_image || '/images/hutan-mangrove-bekantan-1.jpg';
+    const itemRating = dbBooking.hotels?.rating || dbBooking.destinations?.rating || 4.5;
+    const itemPrice = dbBooking.hotels?.price_per_night || dbBooking.destinations?.price || 0;
+
+    return {
+      id: dbBooking.id,
+      userId: dbBooking.user_id,
+      item: {
+        id: dbBooking.hotel_id || dbBooking.destination_id || '',
+        type: dbBooking.booking_type,
+        name: itemName,
+        location: itemLocation,
+        image: itemImage,
+        rating: itemRating,
+        price: itemPrice,
+      },
+      details: {
+        checkIn: dbBooking.check_in_date,
+        checkOut: dbBooking.check_out_date || undefined,
+        guests: dbBooking.guests,
+        rooms: dbBooking.rooms || undefined,
+        specialRequests: dbBooking.notes || '',
+      },
+      payment: {
+        method: dbBooking.payment_method,
+        status: dbBooking.payment_status,
+        id: dbBooking.payment_id || undefined,
+      },
+      total: dbBooking.total_amount,
+      status: dbBooking.status,
+      createdAt: dbBooking.created_at,
+    };
+  };
+
+  // Legacy function to load from localStorage (keep as fallback)
+  const loadBookingsFromLocalStorage = () => {
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      const savedBookings = localStorage.getItem('kaltara-bookings');
+      if (savedBookings) {
+        let bookings = JSON.parse(savedBookings);
+        
+        // Migrate old booking structure to new structure
+        bookings = bookings.map((booking: any) => {
+          // Check if booking uses old structure
+          if (booking.bookingDetails && !booking.details) {
             return {
               ...booking,
-              details: booking.details || {},
-              payment: booking.payment || {},
-              total: booking.total || 0
+              details: booking.bookingDetails,
+              payment: booking.paymentDetails || {},
+              total: booking.totalAmount || booking.total || 0
             };
-          });
+          }
           
-          // Save migrated bookings back to localStorage
-          localStorage.setItem('kaltara-bookings', JSON.stringify(bookings));
-          setBookings(bookings);
-        }
-      } catch (error) {
-        console.error('Error loading bookings:', error);
-      } finally {
-        setIsLoading(false);
+          // Ensure all required fields exist
+          return {
+            ...booking,
+            details: booking.details || {},
+            payment: booking.payment || {},
+            total: booking.total || 0
+          };
+        });
+        
+        // Save migrated bookings back to localStorage
+        localStorage.setItem('kaltara-bookings', JSON.stringify(bookings));
+        setBookings(bookings);
       }
-    };
-
-    loadBookings();
-  }, []);
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredBookings = bookings.filter(booking => {
     // Ensure booking has required properties
@@ -168,9 +263,9 @@ Tamu: ${booking.details.guests} orang
 Permintaan Khusus: ${booking.details.specialRequests || 'Tidak ada'}
 
 DETAIL PEMBAYARAN:
-Kartu: **** **** **** ${booking.payment?.cardNumber?.slice(-4) || '****'}
-Pemegang Kartu: ${booking.payment?.cardHolder || 'N/A'}
-Alamat Billing: ${booking.payment?.billingAddress || 'N/A'}, ${booking.payment?.city || 'N/A'} ${booking.payment?.postalCode || 'N/A'}
+Metode Pembayaran: ${booking.payment?.method || 'N/A'}
+Status Pembayaran: ${booking.payment?.status || 'N/A'}
+Payment ID: ${booking.payment?.id || 'N/A'}
 
 TOTAL PEMBAYARAN: Rp ${booking.total.toLocaleString('id-ID')}
 
