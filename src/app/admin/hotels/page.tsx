@@ -126,18 +126,31 @@ export default function HotelsPage() {
   };
 
   const handleSaveHotel = async (hotelData: any) => {
+    // Prevent multiple submissions
+    if (actionLoading) {
+      console.log('Save already in progress, ignoring duplicate submission');
+      return;
+    }
+    
     try {
       setActionLoading(true);
       
       console.log('Saving hotel with data:', hotelData);
       
+      // Validate required fields
+      if (!hotelData.name || !hotelData.location) {
+        throw new Error('Name and location are required fields');
+      }
+      
       if (currentHotel) {
         // Update existing hotel
+        console.log('Updating hotel with ID:', currentHotel.id);
         const updatedHotel = await AdminService.updateHotel(currentHotel.id, hotelData);
         setHotelList(prev => prev.map(h => h.id === currentHotel.id ? { ...h, ...updatedHotel } : h));
         setToast({ message: 'Hotel updated successfully!', variant: 'success' });
       } else {
         // Create new hotel
+        console.log('Creating new hotel');
         const newHotel = await AdminService.createHotel(hotelData);
         setHotelList(prev => [...prev, newHotel]);
         setToast({ message: 'Hotel created successfully!', variant: 'success' });
@@ -152,7 +165,10 @@ export default function HotelsPage() {
         variant: 'error' 
       });
     } finally {
-      setActionLoading(false);
+      // Ensure loading state is reset even on error
+      setTimeout(() => {
+        setActionLoading(false);
+      }, 100);
     }
   };
 

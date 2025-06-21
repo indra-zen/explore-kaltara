@@ -683,7 +683,10 @@ export class AdminService {
     status: 'active' | 'inactive' | 'pending';
   }>) {
     try {
-      console.log('Updating hotel with ID:', id, 'Data:', hotelData);
+      console.log('🔄 Starting hotel update for ID:', id);
+      console.log('📝 Hotel data to update:', JSON.stringify(hotelData, null, 2));
+      
+      const startTime = Date.now();
       
       const { data, error } = await supabase
         .from('hotels')
@@ -692,14 +695,18 @@ export class AdminService {
         .select()
         .single();
 
+      const updateTime = Date.now() - startTime;
+      console.log(`✅ Supabase update completed in ${updateTime}ms`);
+
       if (error) {
-        console.error('Supabase update error:', error);
+        console.error('❌ Supabase update error:', error);
         throw error;
       }
 
-      console.log('Hotel updated successfully:', data);
+      console.log('✅ Hotel updated successfully:', data);
 
       // Log activity (non-blocking)
+      const activityStartTime = Date.now();
       try {
         await this.logActivity(
           'update',
@@ -708,18 +715,23 @@ export class AdminService {
           `Updated hotel: ${hotelData.name || 'Unknown'}`,
           hotelData
         );
+        console.log(`📋 Activity logged in ${Date.now() - activityStartTime}ms`);
       } catch (logError) {
-        console.warn('Activity logging failed:', logError);
+        console.warn('⚠️ Activity logging failed:', logError);
       }
 
       // Trigger revalidation (non-blocking and with timeout)
-      this.triggerRevalidation('hotel', data.slug).catch(revalError => {
-        console.warn('Revalidation failed:', revalError);
+      const revalidationStartTime = Date.now();
+      this.triggerRevalidation('hotel', data.slug).then(() => {
+        console.log(`🔄 Revalidation completed in ${Date.now() - revalidationStartTime}ms`);
+      }).catch(revalError => {
+        console.warn('⚠️ Revalidation failed:', revalError);
       });
 
+      console.log(`🎉 Total hotel update process took ${Date.now() - startTime}ms`);
       return data;
     } catch (error) {
-      console.error('Error updating hotel:', error);
+      console.error('💥 Error updating hotel:', error);
       throw error;
     }
   }
@@ -1232,13 +1244,20 @@ export class AdminService {
   // Helper function to trigger revalidation after data updates
   static async triggerRevalidation(type: 'destination' | 'hotel', slug?: string) {
     try {
+      console.log(`🔄 Starting revalidation for ${type}${slug ? ` (${slug})` : ''}`);
+      
       if (typeof window !== 'undefined') {
         // Client-side: make API call with timeout and error handling
+        console.log('📡 Making client-side revalidation request...');
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => {
+          console.log('⏰ Revalidation timeout reached, aborting request');
+          controller.abort();
+        }, 5000); // 5 second timeout
         
         try {
-          await fetch('/api/revalidate', {
+          const startTime = Date.now();
+          const response = await fetch('/api/revalidate', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1250,29 +1269,39 @@ export class AdminService {
             }),
             signal: controller.signal
           });
+          
           clearTimeout(timeoutId);
-          console.log(`Triggered revalidation for ${type}${slug ? ` (${slug})` : ''}`);
+          const responseTime = Date.now() - startTime;
+          console.log(`📡 Revalidation response received in ${responseTime}ms, status: ${response.status}`);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.warn(`⚠️ Revalidation response not OK: ${response.status} - ${errorText}`);
+          } else {
+            console.log(`✅ Revalidation successful for ${type}${slug ? ` (${slug})` : ''}`);
+          }
         } catch (fetchError) {
           clearTimeout(timeoutId);
           if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-            console.warn('Revalidation request timed out - continuing without revalidation');
+            console.warn('⏰ Revalidation request timed out - continuing without revalidation');
           } else {
-            console.warn('Revalidation failed - continuing without revalidation:', fetchError);
+            console.warn('❌ Revalidation failed - continuing without revalidation:', fetchError);
           }
           // Don't throw - continue with the operation even if revalidation fails
         }
       } else {
         // Server-side: direct revalidation
+        console.log('🖥️ Performing server-side revalidation...');
         const { revalidatePath } = await import('next/cache');
         if (slug) {
           await revalidatePath(`/${type}s/${slug}`);
         } else {
           await revalidatePath(`/${type}s`);
         }
-        console.log(`Triggered revalidation for ${type}${slug ? ` (${slug})` : ''}`);
+        console.log(`✅ Server-side revalidation completed for ${type}${slug ? ` (${slug})` : ''}`);
       }
     } catch (error) {
-      console.error('Error triggering revalidation:', error);
+      console.error('💥 Error triggering revalidation:', error);
       // Don't throw - revalidation failure shouldn't block the main operation
     }
   }

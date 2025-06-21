@@ -664,6 +664,23 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent multiple submissions
+    if (loading) {
+      console.log('Form already submitting, ignoring duplicate submission');
+      return;
+    }
+    
+    // Validate required fields
+    if (!formData.name?.trim()) {
+      alert('Hotel name is required');
+      return;
+    }
+    
+    if (!formData.location?.trim()) {
+      alert('Hotel location is required');
+      return;
+    }
+    
     // Generate slug from name if not provided
     const slug = formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     
@@ -671,10 +688,12 @@ export function HotelModal({ isOpen, hotel, onSave, onCancel, loading = false }:
     const submissionData = {
       ...formData,
       slug,
-      description: formData.description || '',
+      name: formData.name.trim(),
+      location: formData.location.trim(),
+      description: formData.description?.trim() || '',
       rating: formData.rating || 0,
-      images: formData.images || [],
-      amenities: formData.amenities || [],
+      images: Array.isArray(formData.images) ? formData.images.filter(img => img?.trim()) : [],
+      amenities: Array.isArray(formData.amenities) ? formData.amenities.filter(amenity => amenity?.trim()) : [],
       contact_info: formData.contact_info || {},
       policies: formData.policies || {},
       room_types: formData.room_types || []
