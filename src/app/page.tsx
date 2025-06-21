@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -8,10 +9,37 @@ import { PublicDataService } from '@/lib/supabase/public-service';
 import type { Destination, Hotel } from '@/lib/supabase/types';
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [featuredDestinations, setFeaturedDestinations] = useState<Destination[]>([]);
   const [featuredHotels, setFeaturedHotels] = useState<Hotel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'database' | 'fallback'>('database');
+  const [authMessage, setAuthMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Check for auth status in URL params
+  useEffect(() => {
+    const authStatus = searchParams.get('auth');
+    const error = searchParams.get('error');
+    
+    if (authStatus === 'success') {
+      setAuthMessage({ 
+        type: 'success', 
+        text: 'Email berhasil diverifikasi! Anda sekarang sudah masuk ke akun.' 
+      });
+      // Clear message after 5 seconds
+      setTimeout(() => setAuthMessage(null), 5000);
+    } else if (error) {
+      const errorMessages: Record<string, string> = {
+        'auth_failed': 'Gagal memverifikasi email. Silakan coba lagi.',
+        'unexpected': 'Terjadi kesalahan yang tidak terduga.'
+      };
+      setAuthMessage({ 
+        type: 'error', 
+        text: errorMessages[error] || 'Terjadi kesalahan.' 
+      });
+      setTimeout(() => setAuthMessage(null), 5000);
+    }
+  }, [searchParams]);
 
   // Load featured data from database
   useEffect(() => {
@@ -47,6 +75,34 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
       <Header />
+
+      {/* Auth Message */}
+      {authMessage && (
+        <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4`}>
+          <div className={`rounded-lg p-4 ${
+            authMessage.type === 'success' 
+              ? 'bg-green-50 border border-green-200 text-green-800' 
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            <div className="flex">
+              <div className="flex-shrink-0">
+                {authMessage.type === 'success' ? (
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium">{authMessage.text}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">

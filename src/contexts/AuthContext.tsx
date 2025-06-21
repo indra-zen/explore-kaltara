@@ -179,6 +179,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           data: {
             name: name,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         },
       });
 
