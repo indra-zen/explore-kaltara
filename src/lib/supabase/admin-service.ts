@@ -271,7 +271,7 @@ export class AdminService {
           *,
           profiles(name, email),
           hotels(name, location, featured_image, rating, price_per_night),
-          destinations(name, location, featured_image, rating, price)
+          destinations(name, location, featured_image, rating, price_range)
         `, { count: 'exact' })
         .order('created_at', { ascending: false });
 

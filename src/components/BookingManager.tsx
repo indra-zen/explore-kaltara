@@ -108,7 +108,7 @@ export default function BookingManager() {
     const itemLocation = dbBooking.hotels?.location || dbBooking.destinations?.location || 'Unknown Location';
     const itemImage = dbBooking.hotels?.featured_image || dbBooking.destinations?.featured_image || '/images/hutan-mangrove-bekantan-1.jpg';
     const itemRating = dbBooking.hotels?.rating || dbBooking.destinations?.rating || 4.5;
-    const itemPrice = dbBooking.hotels?.price_per_night || dbBooking.destinations?.price || 0;
+    const itemPrice = dbBooking.hotels?.price_per_night || getPriceFromRange(dbBooking.destinations?.price_range) || 0;
 
     return {
       id: dbBooking.id,
@@ -315,6 +315,24 @@ Terima kasih telah menggunakan layanan Explore Kaltara!
     } catch (error) {
       console.error('Error calculating nights:', error);
       return 1;
+    }
+  };
+
+  const getPriceFromRange = (priceRange: string | undefined): number => {
+    if (!priceRange) return 0;
+    
+    // Convert price range to estimated numeric value
+    switch (priceRange.toLowerCase()) {
+      case 'free':
+        return 0;
+      case 'budget':
+        return 50000; // 50k IDR
+      case 'mid-range':
+        return 150000; // 150k IDR
+      case 'expensive':
+        return 500000; // 500k IDR
+      default:
+        return 0;
     }
   };
 
