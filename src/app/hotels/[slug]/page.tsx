@@ -12,10 +12,13 @@ interface HotelPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const revalidate = 60; // Revalidate every 60 seconds
+
 export async function generateStaticParams() {
   try {
     const result = await PublicDataService.getHotels();
-    return result.data.map((hotel: Hotel) => ({
+    // Only generate a few key pages at build time, others will be generated on-demand
+    return result.data.slice(0, 5).map((hotel: Hotel) => ({
       slug: hotel.slug,
     }));
   } catch (error) {

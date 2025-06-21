@@ -494,6 +494,9 @@ export class AdminService {
         destinationData
       );
 
+      // Trigger revalidation for destinations list and specific destination page
+      await this.triggerRevalidation('destination', data.slug);
+
       return data;
     } catch (error) {
       console.error('Error creating destination:', error);
@@ -538,6 +541,9 @@ export class AdminService {
         destinationData
       );
 
+      // Trigger revalidation for destinations list and specific destination page
+      await this.triggerRevalidation('destination', data.slug);
+
       return data;
     } catch (error) {
       console.error('Error updating destination:', error);
@@ -563,6 +569,9 @@ export class AdminService {
         `Deleted destination: ${data.name}`,
         { deleted_destination: data }
       );
+
+      // Trigger revalidation for destinations list
+      await this.triggerRevalidation('destination');
 
       return data;
     } catch (error) {
@@ -628,6 +637,9 @@ export class AdminService {
         hotelData
       );
 
+      // Trigger revalidation for hotels list and specific hotel page
+      await this.triggerRevalidation('hotel', data.slug);
+
       return data;
     } catch (error) {
       console.error('Error creating hotel:', error);
@@ -674,6 +686,9 @@ export class AdminService {
         hotelData
       );
 
+      // Trigger revalidation for hotels list and specific hotel page
+      await this.triggerRevalidation('hotel', data.slug);
+
       return data;
     } catch (error) {
       console.error('Error updating hotel:', error);
@@ -699,6 +714,9 @@ export class AdminService {
         `Deleted hotel: ${data.name}`,
         { deleted_hotel: data }
       );
+
+      // Trigger revalidation for hotels list
+      await this.triggerRevalidation('hotel');
 
       return data;
     } catch (error) {
@@ -1180,6 +1198,37 @@ export class AdminService {
     } catch (error) {
       console.error('Error in findHotelBySlug:', error);
       return null;
+    }
+  }
+
+  // Helper function to trigger revalidation after data updates
+  static async triggerRevalidation(type: 'destination' | 'hotel', slug?: string) {
+    try {
+      if (typeof window !== 'undefined') {
+        // Client-side: make API call
+        await fetch('/api/revalidate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type,
+            slug,
+            secret: process.env.NEXT_PUBLIC_REVALIDATION_SECRET || 'explore-kaltara-revalidate-2025'
+          }),
+        });
+      } else {
+        // Server-side: direct revalidation
+        const { revalidatePath } = await import('next/cache');
+        if (slug) {
+          await revalidatePath(`/${type}s/${slug}`);
+        } else {
+          await revalidatePath(`/${type}s`);
+        }
+      }
+      console.log(`Triggered revalidation for ${type}${slug ? ` (${slug})` : ''}`);
+    } catch (error) {
+      console.error('Error triggering revalidation:', error);
     }
   }
 }

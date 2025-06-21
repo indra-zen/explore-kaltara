@@ -12,10 +12,13 @@ interface DestinationPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const revalidate = 60; // Revalidate every 60 seconds
+
 export async function generateStaticParams() {
   try {
     const result = await PublicDataService.getDestinations();
-    return result.data.map((destination: Destination) => ({
+    // Only generate a few key pages at build time, others will be generated on-demand
+    return result.data.slice(0, 5).map((destination: Destination) => ({
       slug: destination.slug,
     }));
   } catch (error) {
@@ -50,8 +53,10 @@ export async function generateMetadata({ params }: DestinationPageProps) {
 export default async function DestinationPage({ params }: DestinationPageProps) {
   try {
     const { slug } = await params;
-    const result = await PublicDataService.getDestinations();
-    const destination = result.data.find((dest: Destination) => dest.slug === slug);
+    
+    // Fetch fresh data from database on each request (for ISR)
+    const result = await PublicDataService.getDestinationBySlug(slug);
+    const destination = result.data;
 
     if (!destination) {
       notFound();
