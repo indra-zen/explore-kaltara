@@ -66,6 +66,33 @@ export class PublicDataService {
     }
   }
 
+  static async getDestinationById(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('*')
+        .eq('id', id)
+        .eq('status', 'active')
+        .single();
+
+      if (error) {
+        console.error('Error fetching destination by ID:', error);
+        // Fallback to JSON data
+        const jsonData = await import('@/data/destinations.json');
+        const destination = jsonData.default.find(d => d.id === id);
+        return { data: destination || null, error: null, fromFallback: true };
+      }
+
+      return { data, error: null, fromFallback: false };
+    } catch (error) {
+      console.error('Error in getDestinationById:', error);
+      // Fallback to JSON data
+      const jsonData = await import('@/data/destinations.json');
+      const destination = jsonData.default.find(d => d.id === id);
+      return { data: destination || null, error: null, fromFallback: true };
+    }
+  }
+
   static async getDestinationBySlug(slug: string) {
     try {
       const { data, error } = await supabase
@@ -154,6 +181,33 @@ export class PublicDataService {
       // Fallback to JSON data
       const jsonData = await import('@/data/hotels.json');
       return { data: jsonData.default, error: null, fromFallback: true };
+    }
+  }
+
+  static async getHotelById(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('hotels')
+        .select('*')
+        .eq('id', id)
+        .eq('status', 'active')
+        .single();
+
+      if (error) {
+        console.error('Error fetching hotel by ID:', error);
+        // Fallback to JSON data
+        const jsonData = await import('@/data/hotels.json');
+        const hotel = jsonData.default.find(h => h.id === id);
+        return { data: hotel || null, error: null, fromFallback: true };
+      }
+
+      return { data, error: null, fromFallback: false };
+    } catch (error) {
+      console.error('Error in getHotelById:', error);
+      // Fallback to JSON data
+      const jsonData = await import('@/data/hotels.json');
+      const hotel = jsonData.default.find(h => h.id === id);
+      return { data: hotel || null, error: null, fromFallback: true };
     }
   }
 

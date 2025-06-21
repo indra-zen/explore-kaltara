@@ -4,8 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Calendar, MapPin, Users, Clock, CreditCard, Check, ArrowLeft, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import destinationsData from '@/data/destinations.json';
-import hotelsData from '@/data/hotels.json';
+import { PublicDataService } from '@/lib/supabase/public-service';
+import type { Hotel, Destination } from '@/lib/supabase/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Link from 'next/link';
 
@@ -68,72 +68,92 @@ function BookingContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const itemId = searchParams.get('item');
-    const type = searchParams.get('type') as 'hotel' | 'destination';
+    const loadBookingItem = async () => {
+      const itemId = searchParams.get('item');
+      const type = searchParams.get('type') as 'hotel' | 'destination';
 
-    if (!itemId || !type) {
-      router.push('/');
-      return;
-    }
-
-    // Find the item from data
-    let item: BookingItem | null = null;
-
-    if (type === 'hotel') {
-      const hotel = hotelsData.find(h => h.id === itemId);
-      if (hotel) {
-        // Extract price from priceRange string (e.g., "IDR 800,000 - IDR 1,500,000")
-        const priceMatch = hotel.priceRange.match(/IDR ([\d,]+)/);
-        const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : 800000;
-        
-        item = {
-          id: hotel.id,
-          type: 'hotel',
-          name: hotel.name,
-          location: hotel.location,
-          image: hotel.image,
-          rating: hotel.rating,
-          price: price,
-          description: hotel.description
-        };
+      if (!itemId || !type) {
+        router.push('/');
+        return;
       }
-    } else if (type === 'destination') {
-      const destination = destinationsData.find(d => d.id === itemId);
-      if (destination) {
-        // Extract price from ticketPrice or use default
-        const priceMatch = destination.ticketPrice.match(/[\d,]+/);
-        const price = priceMatch ? parseInt(priceMatch[0].replace(/,/g, '')) : 250000;
-        
-        item = {
-          id: destination.id,
-          type: 'destination',
-          name: destination.name,
-          location: destination.location,
-          image: destination.image,
-          rating: destination.rating,
-          price: price,
-          description: destination.description
-        };
-      }
-    }
 
-    setBookingItem(item);
-    
-    // Populate form with URL parameters
-    const checkIn = searchParams.get('checkIn');
-    const checkOut = searchParams.get('checkOut');
-    const guests = searchParams.get('guests');
-    
-    if (checkIn || checkOut || guests) {
-      setBookingForm(prev => ({
-        ...prev,
-        checkIn: checkIn || prev.checkIn,
-        checkOut: checkOut || prev.checkOut,
-        guests: guests ? parseInt(guests) : prev.guests
-      }));
-    }
-    
-    setIsLoading(false);
+      setIsLoading(true);
+      
+      try {
+        let item: BookingItem | null = null;
+
+        if (type === 'hotel') {
+          const result = await PublicDataService.getHotelById(itemId);
+          const hotel = result.data;
+          
+          if (hotel) {
+            item = {
+              id: hotel.id,
+              type: 'hotel',
+              name: hotel.name,
+              location: hotel.location,
+              image: hotel.featured_image || (hotel.images && hotel.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg',
+              rating: hotel.rating || 4.5,
+              price: hotel.price_per_night || 800000,
+              description: hotel.description || 'Hotel yang nyaman untuk menginap.'
+            };
+          }
+        } else if (type === 'destination') {
+          const result = await PublicDataService.getDestinationById(itemId);
+          const destination = result.data;
+          
+          if (destination) {
+            // For destinations, create a reasonable price based on category
+            let price = 50000; // Base price
+            if (destination.price_range === 'expensive') price = 150000;
+            else if (destination.price_range === 'mid-range') price = 100000;
+            else if (destination.price_range === 'budget') price = 50000;
+            else if (destination.price_range === 'free') price = 0;
+            
+            item = {
+              id: destination.id,
+              type: 'destination',
+              name: destination.name,
+              location: destination.location,
+              image: destination.featured_image || (destination.images && destination.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg',
+              rating: destination.rating || 4.5,
+              price: price,
+              description: destination.description || 'Destinasi wisata yang menarik untuk dikunjungi.'
+            };
+          }
+        }
+
+        if (!item) {
+          console.error('Item not found:', { itemId, type });
+          router.push('/?error=item_not_found');
+          return;
+        }
+
+        setBookingItem(item);
+        
+        // Populate form with URL parameters
+        const checkIn = searchParams.get('checkIn');
+        const checkOut = searchParams.get('checkOut');
+        const guests = searchParams.get('guests');
+        
+        if (checkIn || checkOut || guests) {
+          setBookingForm(prev => ({
+            ...prev,
+            checkIn: checkIn || prev.checkIn,
+            checkOut: checkOut || prev.checkOut,
+            guests: guests ? parseInt(guests) : prev.guests
+          }));
+        }
+        
+      } catch (error) {
+        console.error('Error loading booking item:', error);
+        router.push('/?error=loading_failed');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBookingItem();
   }, [searchParams, router]);
 
   // Load and save booking draft - with SSR safety
@@ -326,27 +346,18 @@ function BookingContent() {
       setBookingId(newBookingId);
 
       // Prepare booking data for database
-      // Import AdminService
+      // Import AdminService for creating the booking
       const AdminService = (await import('@/lib/supabase/admin-service')).default;
       
-      // First resolve the correct database IDs using slugs
+      // bookingItem.id is already the correct database ID (UUID)
+      // since we loaded it from the database using PublicDataService
       let destinationId: string | undefined;
       let hotelId: string | undefined;
 
       if (bookingItem?.type === 'destination') {
-        const dbDestinationId = await AdminService.findDestinationBySlug(bookingItem.id);
-        if (dbDestinationId) {
-          destinationId = dbDestinationId;
-        } else {
-          console.error(`Destination not found in database: ${bookingItem.id}`);
-        }
+        destinationId = bookingItem.id;
       } else if (bookingItem?.type === 'hotel') {
-        const dbHotelId = await AdminService.findHotelBySlug(bookingItem.id);
-        if (dbHotelId) {
-          hotelId = dbHotelId;
-        } else {
-          console.error(`Hotel not found in database: ${bookingItem.id}`);
-        }
+        hotelId = bookingItem.id;
       }
 
       const bookingData = {
