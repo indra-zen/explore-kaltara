@@ -185,12 +185,13 @@ function HomeContent() {
           {isLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse">
-                  <div className="h-64 bg-gray-300"></div>
-                  <div className="p-6">
+                <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse h-full flex flex-col">
+                  <div className="h-64 bg-gray-300 flex-shrink-0"></div>
+                  <div className="p-6 flex flex-col flex-grow">
                     <div className="h-4 bg-gray-300 rounded mb-2"></div>
                     <div className="h-6 bg-gray-300 rounded mb-3"></div>
-                    <div className="h-16 bg-gray-300 rounded"></div>
+                    <div className="h-16 bg-gray-300 rounded flex-grow"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/3 mt-4"></div>
                   </div>
                 </div>
               ))}
@@ -198,9 +199,9 @@ function HomeContent() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {featuredDestinations.map((destination, index) => (
-              <Link key={index} href={`/destinations/${destination.slug}`} className="group">
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                  <div className="relative h-64 overflow-hidden">
+              <Link key={index} href={`/destinations/${destination.slug}`} className="group h-full">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col">
+                  <div className="relative h-64 overflow-hidden flex-shrink-0">
                     <Image
                       src={destination.featured_image || destination.images?.[0] || '/images/placeholder.jpg'}
                       alt={destination.name}
@@ -212,10 +213,10 @@ function HomeContent() {
                       <span className="ml-1 font-semibold">{destination.rating}</span>
                     </div>
                   </div>
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-grow">
                     <div className="text-emerald-600 text-sm font-semibold mb-2">{destination.location}</div>
                     <h3 className="text-xl font-bold text-gray-900 mb-3">{destination.name}</h3>
-                    <p className="text-gray-600 leading-relaxed">{destination.description}</p>
+                    <p className="text-gray-600 leading-relaxed flex-grow line-clamp-3">{destination.description}</p>
                     <div className="mt-4 text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">
                       Selengkapnya →
                     </div>
@@ -252,12 +253,12 @@ function HomeContent() {
           {isLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse">
-                  <div className="h-48 bg-gray-300"></div>
-                  <div className="p-6">
+                <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse h-full flex flex-col">
+                  <div className="h-48 bg-gray-300 flex-shrink-0"></div>
+                  <div className="p-6 flex flex-col flex-grow">
                     <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                    <div className="h-6 bg-gray-300 rounded mb-3"></div>
-                    <div className="h-4 bg-gray-300 rounded"></div>
+                    <div className="h-6 bg-gray-300 rounded mb-3 flex-grow"></div>
+                    <div className="h-4 bg-gray-300 rounded mt-auto"></div>
                   </div>
                 </div>
               ))}
@@ -265,9 +266,9 @@ function HomeContent() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {featuredHotels.map((hotel, index) => (
-              <Link key={index} href={`/hotels/${hotel.slug}`} className="group">
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
-                  <div className="relative h-48">
+              <Link key={index} href={`/hotels/${hotel.slug}`} className="group h-full">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 h-full flex flex-col">
+                  <div className="relative h-48 flex-shrink-0">
                     <Image
                       src={hotel.featured_image || hotel.images?.[0] || '/images/placeholder.jpg'}
                       alt={hotel.name}
@@ -275,18 +276,18 @@ function HomeContent() {
                       className="object-cover"
                     />
                   </div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
+                  <div className="p-6 flex flex-col flex-grow">
+                    <div className="flex justify-between items-start mb-3 flex-grow">
+                      <div className="flex-grow">
                         <h3 className="text-lg font-bold text-gray-900">{hotel.name}</h3>
                         <p className="text-emerald-600 text-sm">{hotel.location}</p>
                       </div>
-                      <div className="flex items-center bg-emerald-100 px-2 py-1 rounded-full">
+                      <div className="flex items-center bg-emerald-100 px-2 py-1 rounded-full flex-shrink-0">
                         <span className="text-yellow-500 text-sm">★</span>
                         <span className="ml-1 text-sm font-semibold text-emerald-800">{hotel.rating}</span>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mt-auto">
                       <span className="text-emerald-600 font-bold">
                         {hotel.price_per_night ? `IDR ${hotel.price_per_night.toLocaleString('id-ID')}` : 'Harga Bervariasi'}
                       </span>

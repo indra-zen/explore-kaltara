@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AdminService from '@/lib/supabase/admin-service';
 import { getFacilityIcon, commonFacilities, commonHotelAmenities } from '@/lib/facility-icons';
 import { X, Plus } from 'lucide-react';
+
+// Debug: Track form submission attempts
+let submissionCounter = 0;
 
 // User CRUD Modal
 interface UserModalProps {
@@ -190,7 +193,34 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
   });
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newFacility, setNewFacility] = useState('');
+  
+  // Modal timer lock to prevent interference after 2-3 seconds
+  const modalOpenTimeRef = useRef<number>(0);
+  const isModalStaleRef = useRef(false);
+  
+  // Force fresh modal state
+  const refreshModal = () => {
+    console.log('🔄 REFRESHING MODAL STATE');
+    modalOpenTimeRef.current = Date.now();
+    isModalStaleRef.current = false;
+    setModalAgeDisplay('');
+    
+    // Trigger a small state update to force React refresh
+    const currentData = { ...formData };
+    setFormData({ ...currentData });
+  };
+  
+  // Modal timer display for debugging
+  const [modalAgeDisplay, setModalAgeDisplay] = useState('');
+  
   useEffect(() => {
+    // Initialize modal timer when opened
+    if (isOpen) {
+      modalOpenTimeRef.current = Date.now();
+      isModalStaleRef.current = false;
+      console.log('🚀 DESTINATION MODAL opened at:', new Date().toISOString());
+    }
+    
     if (destination) {
       setFormData({
         name: destination.name || '',
@@ -234,8 +264,56 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
     }
   }, [destination, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const updateTimer = () => {
+      const age = Math.round((Date.now() - modalOpenTimeRef.current) / 1000);
+      if (age <= 2) {
+        setModalAgeDisplay(''); // No display for first 2 seconds
+      } else if (age <= 5) {
+        setModalAgeDisplay(` (${age}s)`); // Yellow zone
+      } else {
+        setModalAgeDisplay(` (${age}s - DANGER!)`); // Red zone
+      }
+    };
+    
+    const timer = setInterval(updateTimer, 500); // Update every 500ms for better feedback
+    return () => clearInterval(timer);
+  }, [isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    submissionCounter++;
+    const thisSubmission = submissionCounter;
+    const modalAge = Date.now() - modalOpenTimeRef.current;
+    
+    console.log(`🚀 DESTINATION FORM SUBMISSION #${thisSubmission} STARTED`);
+    console.log(`🕐 Timestamp: ${new Date().toISOString()}`);
+    console.log(`⏰ Modal age: ${modalAge}ms`);
+    console.log(`⏳ Loading state: ${loading}`);
+    console.log(`� Modal stale: ${isModalStaleRef.current}`);
+    
+    // Check if modal has been open too long (more than 3 seconds)
+    if (modalAge > 3000) {
+      console.warn(`⚠️ SUBMISSION #${thisSubmission} - Modal has been open for ${Math.round(modalAge/1000)}s - HIGH RISK OF FAILURE`);
+      const options = confirm(`⚠️ TIMING ISSUE DETECTED!\n\nThis form has been open for ${Math.round(modalAge/1000)} seconds.\nBased on your bug report, this is likely to get stuck.\n\nChoose:\n- OK: Try anyway (will probably fail)\n- Cancel: I'll close and re-open the modal`);
+      
+      if (!options) {
+        console.log(`❌ SUBMISSION #${thisSubmission} - User chose to cancel due to stale modal`);
+        alert('💡 TIP: Close this modal and click Edit again for best results!');
+        return;
+      }
+      
+      console.warn(`⚠️ SUBMISSION #${thisSubmission} - User chose to proceed despite timing risk`);
+    }
+    
+    // Prevent multiple submissions
+    if (loading) {
+      console.log(`⛔ SUBMISSION #${thisSubmission} BLOCKED - Already loading`);
+      return;
+    }
     
     // Generate slug from name if not provided
     const slug = formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -252,7 +330,10 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
       opening_hours: formData.opening_hours || {}
     };
     
-    console.log('Submitting destination data:', submissionData);
+    console.log(`✅ SUBMISSION #${thisSubmission} DATA PREPARED:`, submissionData);
+    console.log(`🏁 SUBMISSION #${thisSubmission} CALLING onSave...`);
+    
+    // Force immediate submission with no delays
     onSave(submissionData);
   };
 
@@ -566,12 +647,29 @@ export function DestinationModal({ isOpen, destination, onSave, onCancel, loadin
             >
               Cancel
             </button>
+            {modalAgeDisplay.includes('s') && (
+              <button
+                type="button"
+                onClick={refreshModal}
+                disabled={loading}
+                className="px-4 py-2 text-sm font-medium text-orange-700 bg-orange-100 border border-orange-300 rounded-md hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50"
+                title="Modal has been open too long - refresh to prevent save issues"
+              >
+                🔄 Refresh
+              </button>
+            )}
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
+                modalAgeDisplay.includes('DANGER') 
+                  ? 'text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 animate-pulse' 
+                  : modalAgeDisplay.includes('s') 
+                    ? 'text-white bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
+                    : 'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+              }`}
             >
-              {loading ? 'Saving...' : (destination ? 'Update Destination' : 'Create Destination')}
+              {loading ? 'Saving...' : (destination ? `Update Destination${modalAgeDisplay}` : `Create Destination${modalAgeDisplay}`)}
             </button>
           </div>
         </form>

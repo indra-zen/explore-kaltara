@@ -202,8 +202,8 @@ export default function DestinationsPage() {
             ) : (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredDestinations.map((destination) => (
-                  <div key={destination.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
-                    <div className="relative h-48 overflow-hidden">
+                  <div key={destination.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group h-full flex flex-col">
+                    <div className="relative h-48 overflow-hidden flex-shrink-0">
                       <Link href={`/destinations/${destination.slug}`}>
                         <Image
                           src={destination.featured_image || destination.images?.[0] || '/images/placeholder.jpg'}
@@ -244,11 +244,11 @@ export default function DestinationsPage() {
                         />
                       </div>
                     </div>
-                    <div className="p-5">
+                    <div className="p-5 flex flex-col flex-grow">
                       <div className="text-emerald-600 text-sm font-semibold mb-2">{destination.location || destination.city}</div>
                       <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{destination.name}</h3>
-                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-3">{destination.description || ''}</p>
-                      <div className="flex justify-between items-center">
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-3 flex-grow">{destination.description || ''}</p>
+                      <div className="flex justify-between items-center mt-auto">
                         <span className="text-emerald-600 font-semibold">
                           {destination.price_range === 'free' ? 'Gratis' :
                            destination.price_range === 'budget' ? 'Budget' :

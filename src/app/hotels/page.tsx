@@ -233,8 +233,8 @@ export default function HotelsPage() {
             ) : (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredHotels.map((hotel) => (
-                  <div key={hotel.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
-                    <div className="relative h-48 overflow-hidden">
+                  <div key={hotel.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group h-full flex flex-col">
+                    <div className="relative h-48 overflow-hidden flex-shrink-0">
                       <Link href={`/hotels/${hotel.slug}`}>
                         <Image
                           src={hotel.featured_image || (hotel.images && hotel.images[0]) || '/images/hutan-mangrove-bekantan-1.jpg'}
@@ -270,15 +270,15 @@ export default function HotelsPage() {
                         />
                       </div>
                     </div>
-                    <div className="p-5">
+                    <div className="p-5 flex flex-col flex-grow">
                       <div className="flex justify-between items-start mb-2">
-                        <div>
+                        <div className="flex-grow">
                           <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">{hotel.name}</h3>
                           <p className="text-emerald-600 text-sm font-semibold">{hotel.city}</p>
                         </div>
                       </div>
                       
-                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3 flex-grow">
                         {hotel.description || 'Hotel yang nyaman untuk menginap.'}
                       </p>
                       
@@ -291,7 +291,7 @@ export default function HotelsPage() {
                         {hotel.amenities && hotel.amenities.includes('Parking') && <span className="text-xs">🅿️</span>}
                       </div>
 
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center mt-auto">
                         <div>
                           <span className="text-emerald-600 font-bold">
                             {hotel.price_per_night ? `IDR ${hotel.price_per_night.toLocaleString()}` : 'Hubungi untuk harga'}
